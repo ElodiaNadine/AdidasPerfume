@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // FIXED: Added useMemo
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
@@ -8,10 +8,18 @@ import {
   setDoc, 
   getDoc, 
   updateDoc,
-  serverTimestamp 
+  serverTimestamp, 
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
-import { Activity, BatteryCharging, Zap, Coffee, Moon, ArrowRight, CheckCircle, XCircle, Search, ShoppingBag, Sparkles, RefreshCw, Star, Heart, Lock, AlertTriangle } from 'lucide-react';
+import { Activity, BatteryCharging, Zap, Coffee, Moon, ArrowRight, CheckCircle, XCircle, Search, ShoppingBag, Sparkles, RefreshCw, Star, Heart, Lock, AlertTriangle, Users, Ticket, MapPin, ArrowLeft, Loader, Download, Filter } from 'lucide-react';
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell 
+} from 'recharts';
+
 /* --- FIREBASE CONFIGURATION --- */
 const firebaseConfig = {
   apiKey: "AIzaSyABxeQn_OO9mzYS-yykdZ0lDUyy4Glotws",
@@ -30,71 +38,72 @@ const appId = 'adidas-vibes-test';
 
 
 // --- DATA & ASSETS ---
-const ADIDAS_LOGO = "https://static.vecteezy.com/system/resources/thumbnails/019/766/237/small/adidas-logo-adidas-icon-transparent-free-png.png";
+const ADIDAS_LOGO = "https://logos-world.net/wp-content/uploads/2020/06/Adidas-Logo.png";
 
 const IMAGES = {
-  ED: "https://static-id.zacdn.com/p/adidas-body-care-6389-0245684-1.jpg", // Energy Drive
-  SU: "https://static-id.zacdn.com/p/adidas-body-care-0177-1245684-1.jpg", // Spark Up
-  FR: "https://static-id.zacdn.com/p/adidas-body-care-6359-3245684-1.jpg", // Full Recharge
-  CZ: "https://static-id.zacdn.com/p/adidas-body-care-6375-9145684-1.jpg", // Chill Zone
-  GC: "https://static-id.zacdn.com/p/adidas-body-care-0782-7042874-1.jpg"  // Get Comfy
+  ED: "https://static-id.zacdn.com/p/adidas-body-care-6389-0245684-1.jpg", 
+  SU: "https://static-id.zacdn.com/p/adidas-body-care-0177-1245684-1.jpg", 
+  FR: "https://static-id.zacdn.com/p/adidas-body-care-6359-3245684-1.jpg", 
+  CZ: "https://static-id.zacdn.com/p/adidas-body-care-6375-9145684-1.jpg", 
+  GC: "https://static-id.zacdn.com/p/adidas-body-care-0782-7042874-1.jpg"  
 };
+
+const CHART_COLORS = ['#1d248a', '#f58362', '#f4b337', '#00C49F', '#FF8042'];
 
 const QUESTIONS = [
   {
     id: 1,
     text: "WHICH ONE DESCRIBES YOUR PERSONALITY THE MOST?",
     options: [
-      { label: "A. Always full of energy", value: "A" },
-      { label: "B. Confident and ambitious", value: "B" },
-      { label: "C. Adventurous and loves trying something new", value: "C" },
-      { label: "D. Calm and stress-free", value: "D" },
-      { label: "E. Warm and friendly", value: "E" }
+      { label: "Always full of energy", value: "A" },
+      { label: "Confident and ambitious", value: "B" },
+      { label: "Adventurous and loves trying something new", value: "C" },
+      { label: "Calm and stress-free", value: "D" },
+      { label: "Warm and friendly", value: "E" }
     ]
   },
   {
     id: 2,
     text: "PICK YOUR PERFECT WEEKEND ACTIVITY",
     options: [
-      { label: "A. Night out with friends, working out", value: "A" },
-      { label: "B. Finishing a project, hitting the gym, cleaning", value: "B" },
-      { label: "C. Exploring nature, exercising", value: "C" },
-      { label: "D. Gaming, self-care at home", value: "D" },
-      { label: "E. Movie night, dinner, listening to music", value: "E" }
+      { label: "Night out with friends, working out", value: "A" },
+      { label: "Finishing a project, hitting the gym, cleaning", value: "B" },
+      { label: "Exploring nature, exercising", value: "C" },
+      { label: "Gaming, self-care at home", value: "D" },
+      { label: "Movie night, dinner, listening to music", value: "E" }
     ]
   },
   {
     id: 3,
     text: "WHICH SCENT DO YOU PREFER THE MOST?",
-    // This question will have HIGHER WEIGHT (Bobot)
     options: [
-      { label: "A. Vibrant spice with fresh scent", value: "A" },
-      { label: "B. Fresh citrusy scent", value: "B" },
-      { label: "C. Earthy, green, nature scent", value: "C" },
-      { label: "D. Aromatic lavender & notes of vanilla scent", value: "D" },
-      { label: "E. Comforting vanilla & juicy mandarin scent", value: "E" }
+      { label: "Vibrant spice with fresh scent", value: "A" },
+      { label: "Fresh citrusy scent", value: "B" },
+      { label: "Earthy, green, nature scent", value: "C" },
+      { label: "Aromatic lavender & notes of vanilla scent", value: "D" },
+      { label: "Comforting vanilla & juicy mandarin scent", value: "E" }
     ]
   },
   {
     id: 4,
     text: "IN A FRIEND GROUP, YOU ARE...",
     options: [
-      { label: "A. The energetic & group mood-maker", value: "A" },
-      { label: "B. The confident & reliable one", value: "B" },
-      { label: "C. The one that always invites to explore new places", value: "C" },
-      { label: "D. The chill & introverted", value: "D" },
-      { label: "E. The most friendly & group mediator", value: "E" }
+      { label: "The energetic & group mood-maker", value: "A" },
+      { label: "The confident & reliable one", value: "B" },
+      { label: "The one that always invites to explore new places", value: "C" },
+      { label: "The chill & introverted", value: "D" },
+      { label: "The most friendly & group mediator", value: "E" }
     ]
   },
   {
     id: 5,
     text: "WHAT’S YOUR GO-TO OUTFIT STYLE?",
     options: [
-      { label: "A. Bright colors, fun patterns, playful style", value: "A" },
-      { label: "B. Monochrome, cool style", value: "B" },
-      { label: "C. Casual outfit with lots of unique accessories", value: "C" },
-      { label: "D. Relaxed t-shirt and jeans", value: "D" },
-      { label: "E. Cozy hoodies", value: "E" }
+      { label: "Bright colors, fun patterns, playful style", value: "A" },
+      { label: "Monochrome, cool style", value: "B" },
+      { label: "Casual outfit with lots of unique accessories", value: "C" },
+      { label: "Relaxed t-shirt and jeans", value: "D" },
+      { label: "Cozy hoodies", value: "E" }
     ]
   }
 ];
@@ -167,11 +176,167 @@ const RESULTS = {
   }
 };
 
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+// --- HELPER: GET IP LOCATION ---
+const getIpLocation = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch('https://ipapi.co/json/', { 
+        signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+        throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json();
+    return {
+      ip: data.ip,
+      city: data.city,
+      region: data.region,
+      country: data.country_name,
+      lat: data.latitude,
+      lng: data.longitude,
+      provider: data.org
+    };
+
+  } catch (error) {
+    console.warn("Could not fetch IP location:", error);
+    return { city: "Unknown", region: "Unknown", country: "Unknown" }; 
+  }
+};
+
+// --- SUB-COMPONENTS FOR INSIGHTS (Defined Before Usage) ---
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#4338ca] p-3 border-2 border-white shadow-[4px_4px_0px_#a3e635] rounded-xl z-50">
+          <p className="text-white font-black uppercase text-xs mb-1 tracking-widest">{label}</p>
+          <p className="text-[#a3e635] font-mono font-bold text-xl leading-none">
+            {payload[0].value} <span className="text-[10px] text-white/60">USERS</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+};
+
+const StatCard = ({ label, value, sub, icon, color, textColor = "text-[#4338ca]", accent }) => (
+    <div className={`${color} p-6 rounded-3xl border-4 ${accent} shadow-[6px_6px_0px_rgba(0,0,0,0.1)] hover:scale-105 transition-transform duration-300 flex flex-col justify-between h-40 relative overflow-hidden`}>
+        <div className="absolute top-0 right-0 p-4 opacity-10 scale-150">{icon}</div>
+        <div className="flex justify-between items-start relative z-10">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${textColor} opacity-70`}>{label}</span>
+            <div className="bg-black/5 p-2 rounded-full backdrop-blur-sm">{icon}</div>
+        </div>
+        <div className="relative z-10">
+            <h3 className={`text-4xl md:text-5xl font-black ${textColor} tracking-tighter leading-none`}>{value}</h3>
+            {sub && <p className={`text-xs font-bold ${textColor} mt-1 opacity-80`}>{sub}</p>}
+        </div>
+    </div>
+);
+
+const PollCard = ({ qId, data, index }) => {
+    const totalVotes = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+    const labels = ["A", "B", "C", "D", "E"];
+    
+    return (
+        <div className="bg-white p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:border-[#4338ca] transition-colors">
+            <h4 className="font-black text-[#4338ca] text-sm uppercase mb-4 flex items-center gap-2">
+                <span className="bg-[#a3e635] w-6 h-6 rounded-full flex items-center justify-center text-[10px] border border-black text-[#1d248a]">
+                    {index + 1}
+                </span>
+                Question Analysis
+            </h4>
+            
+            <div className="space-y-3">
+                {labels.map((option, i) => {
+                    const count = data[option] || 0;
+                    const percent = Math.round((count / totalVotes) * 100);
+                    
+                    return (
+                        <div key={option} className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase text-gray-500 mb-1">
+                                <span>Option {option}</span>
+                                <span>{count} ({percent}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden relative">
+                                <div 
+                                    className="h-full rounded-full transition-all duration-1000 ease-out"
+                                    style={{ 
+                                        width: `${percent}%`, 
+                                        backgroundColor: CHART_COLORS[i % CHART_COLORS.length] 
+                                    }}
+                                ></div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    );
+};
+
+
 // --- COMPONENT: CUSTOMER QUIZ ---
 const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const [shuffledQuestions, setShuffledQuestions] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [checkingHistory, setCheckingHistory] = useState(true);
+
+  useEffect(() => {
+    const checkHistory = async () => {
+        if (!user) {
+            setShuffledQuestions(QUESTIONS.map(q => ({
+                ...q,
+                options: shuffleArray(q.options)
+            })));
+            setCheckingHistory(false);
+            return;
+        }
+
+        try {
+            const codesRef = collection(db, 'artifacts', appId, 'public', 'data', 'vibe_codes');
+            const q = query(codesRef, where("uid", "==", user.uid));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const existingData = querySnapshot.docs[0].data();
+                const resultDetails = RESULTS[existingData.result];
+                setCurrentResult(resultDetails);
+                setGeneratedCode(existingData.code);
+                setView('result');
+            } else {
+                const randomized = QUESTIONS.map(q => ({
+                    ...q,
+                    options: shuffleArray(q.options)
+                }));
+                setShuffledQuestions(randomized);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            setShuffledQuestions(QUESTIONS.map(q => ({...q, options: shuffleArray(q.options)})));
+        } finally {
+            setCheckingHistory(false);
+        }
+    };
+
+    checkHistory();
+  }, [user, setView, setCurrentResult, setGeneratedCode]);
+
 
   const handleAnswer = (value) => {
     const newAnswers = [...answers, value];
@@ -189,13 +354,13 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
     let scores = { ED: 0, SU: 0, FR: 0, CZ: 0, GC: 0 };
 
     finalAnswers.forEach((ans, index) => {
-    const points = (index === 2) ? 2 : 1; 
+        const points = (index === 2) ? 2 : 1; 
 
-    if (ans === "A") scores.ED += points;
-    else if (ans === "B") scores.SU += points;
-    else if (ans === "C") scores.FR += points;
-    else if (ans === "D") scores.CZ += points;
-    else if (ans === "E") scores.GC += points;
+        if (ans === "A") scores.ED += points;
+        else if (ans === "B") scores.SU += points;
+        else if (ans === "C") scores.FR += points;
+        else if (ans === "D") scores.CZ += points;
+        else if (ans === "E") scores.GC += points;
     });
 
     let maxScore = Math.max(scores.ED, scores.SU, scores.FR, scores.CZ, scores.GC);
@@ -209,12 +374,12 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
 
     const isTie = Object.values(scores).filter(s => s === maxScore).length > 1;
     if (isTie) {
-      const q1 = finalAnswers[0];
-      if (q1 === "A") resultKey = "Energy Drive";
-      else if (q1 === "B") resultKey = "Spark Up";
-      else if (q1 === "C") resultKey = "Full Recharge";
-      else if (q1 === "D") resultKey = "Chill Zone";
-      else if (q1 === "E") resultKey = "Get Comfy";
+        const q1 = finalAnswers[0]; 
+        if (q1 === "A") resultKey = "Energy Drive";
+        else if (q1 === "B") resultKey = "Spark Up";
+        else if (q1 === "C") resultKey = "Full Recharge";
+        else if (q1 === "D") resultKey = "Chill Zone";
+        else if (q1 === "E") resultKey = "Get Comfy";
     }
 
     const resultData = RESULTS[resultKey];
@@ -225,9 +390,18 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
 
     if (user) {
       try {
+        const locationData = await getIpLocation(); 
+
+        const answerMap = finalAnswers.reduce((acc, curr, idx) => {
+          acc[`q${idx + 1}`] = curr;
+          return acc;
+        }, {});
+
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vibe_codes', uniqueCode), {
           code: uniqueCode,
           result: resultKey,
+          answers: answerMap,
+          userLocation: locationData,
           redeemed: false,
           createdAt: serverTimestamp(),
           uid: user.uid
@@ -237,14 +411,13 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
       }
     }
 
-    // Artificial delay for effect
     setTimeout(() => {
         setIsCalculating(false);
         setView('result');
     }, 2000);
   };
 
-  if (isCalculating) {
+  if (checkingHistory || isCalculating || !shuffledQuestions) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 relative z-10">
         <div className="relative mb-8">
@@ -252,26 +425,22 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
             <Activity className="relative w-24 h-24 text-white animate-spin drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]" />
         </div>
         <h2 className="text-4xl md:text-5xl font-black italic text-white tracking-tighter uppercase animate-bounce drop-shadow-[4px_4px_0px_#f58362]">
-          Analyzing Vibe...
+          {checkingHistory ? "Checking Status..." : "Analyzing Vibe..."}
         </h2>
       </div>
     );
   }
 
   const progress = ((currentQ + 1) / QUESTIONS.length) * 100;
-
+  const currentQuestionData = shuffledQuestions[currentQ]; 
+  const visualLetters = ["A", "B", "C", "D", "E"];
   return (
     <div className="max-w-lg mx-auto px-4 py-8 relative z-10">
-      {/* Pop Art Progress Bar */}
       <div className="w-full bg-black/20 backdrop-blur-md rounded-full h-4 mb-8 border-2 border-white overflow-hidden shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-        <div 
-            className="bg-[#f4b337] h-full transition-all duration-500" 
-            style={{ width: `${progress}%` }}
-        ></div>
+        <div className="bg-[#f4b337] h-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
       </div>
 
       <div className="bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-[10px_10px_0px_rgba(0,0,0,0.2)] border-4 border-white p-6 transform transition-all animate-fade-in relative overflow-hidden">
-        {/* Decorative Pop Elements */}
         <div className="absolute -top-5 -right-5 w-20 h-20 bg-[#f58362] rounded-full opacity-20 animate-pulse"></div>
         <div className="absolute top-10 -left-5 w-10 h-10 bg-[#1d248a] rotate-45 opacity-10"></div>
 
@@ -285,20 +454,22 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
         </div>
         
         <h2 className="text-2xl md:text-3xl font-black text-[#1d248a] mb-8 leading-none uppercase italic tracking-tight relative z-10 drop-shadow-sm">
-          {QUESTIONS[currentQ].text}
+          {currentQuestionData.text}
         </h2>
 
         <div className="space-y-4 relative z-10">
-          {QUESTIONS[currentQ].options.map((option, idx) => (
+          {currentQuestionData.options.map((option, idx) => (
             <button
               key={idx}
               onClick={() => handleAnswer(option.value)}
-              className="w-full text-left p-4 rounded-xl border-2 border-transparent bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_#f58362] hover:border-[#f58362] hover:-translate-y-1 transition-all duration-200 group flex items-center active:scale-95 active:shadow-none active:translate-y-0"
+              className={`w-full text-left p-4 rounded-xl border-2 border-transparent bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_#f58362] hover:border-[#f58362] hover:-translate-y-1 transition-all duration-200 group flex items-center active:scale-95 active:shadow-none active:translate-y-0`}
             >
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#1d248a] text-white font-black text-sm flex items-center justify-center mr-4 group-hover:bg-[#f58362] transition-colors duration-200 shadow-inner border-2 border-white">
-                {option.value}
+                {visualLetters[idx]}
               </div>
-              <span className="text-gray-800 font-bold text-sm md:text-base leading-tight uppercase tracking-tight">{option.label.substring(3)}</span>
+              <span className="text-gray-800 font-bold text-sm md:text-base leading-tight uppercase tracking-tight">
+                {option.label}
+              </span>
             </button>
           ))}
         </div>
@@ -312,7 +483,6 @@ const CustomerResult = ({ result, code }) => {
   return (
     <div className="max-w-sm md:max-w-md mx-auto px-4 py-8 animate-fade-in relative z-10">
       
-      {/* Floating Header Text */}
       <div className="text-center mb-8 animate-float relative">
         <span className="inline-block bg-white text-[#1d248a] font-black uppercase tracking-widest text-[10px] px-4 py-1.5 rounded-full shadow-[4px_4px_0px_rgba(0,0,0,0.2)] mb-3 border-2 border-white transform -rotate-2">
            You Matched With
@@ -327,14 +497,10 @@ const CustomerResult = ({ result, code }) => {
 
       <div className="bg-white rounded-[2.5rem] shadow-[0px_20px_50px_rgba(0,0,0,0.3)] overflow-hidden border-[6px] border-white relative">
         
-        {/* Product Image Section - Smaller & Compact */}
         <div className={`relative pt-8 pb-4 px-8 flex justify-center bg-gradient-to-b from-gray-50 to-white`}>
            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-gray-100/50 to-transparent"></div>
-           
-           {/* Blob behind image */}
            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 ${result.color} rounded-full filter blur-3xl opacity-30`}></div>
            
-           {/* The Image Container */}
            <div className="relative w-36 h-36 bg-white rounded-[2rem] p-3 shadow-[8px_8px_0px_rgba(0,0,0,0.1)] border-2 border-gray-100 transform rotate-6 hover:rotate-0 transition-transform duration-500">
              <img 
               src={result.img} 
@@ -396,6 +562,7 @@ const StaffDashboard = ({ user, setView }) => {
   const [lookupResult, setLookupResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const checkCode = async () => {
     if (!inputCode) return;
@@ -411,7 +578,6 @@ const StaffDashboard = ({ user, setView }) => {
         const data = docSnap.data();
         const resultDetails = RESULTS[data.result];
         
-        // --- VOUCHER LOGIC UPGRADE ---
         if (data.redeemed) {
            setError("⚠️ THIS CODE HAS ALREADY BEEN REDEEMED!"); 
         }
@@ -432,11 +598,14 @@ const StaffDashboard = ({ user, setView }) => {
     if (!lookupResult) return;
     setLoading(true);
     try {
+      const staffLocationData = await getIpLocation();
+
       const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'vibe_codes', lookupResult.code);
       await updateDoc(docRef, {
         redeemed: true,
         redeemedAt: serverTimestamp(),
-        redeemedBy: user.uid
+        redeemedBy: user.uid,
+        redeemLocation: staffLocationData
       });
       setLookupResult(prev => ({ ...prev, redeemed: true }));
     } catch (err) {
@@ -469,7 +638,6 @@ const StaffDashboard = ({ user, setView }) => {
         <div className="p-6">
           <div className="mb-8">
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 pl-1">Input Code</label>
-            {/* --- FIXED MOBILE LAYOUT --- */}
             <div className="flex flex-col sm:flex-row gap-3">
               <input 
                 type="text" 
@@ -484,12 +652,10 @@ const StaffDashboard = ({ user, setView }) => {
                 className="h-14 bg-[#1d248a] text-white rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 shadow-[4px_4px_0px_#000] active:translate-y-1 active:shadow-none border-2 border-transparent flex justify-center items-center gap-2 sm:w-auto sm:px-6"
               >
                 {loading ? <Activity className="w-6 h-6 animate-spin" /> : <Search className="w-6 h-6" />}
-                {/* Visible Label for Mobile Styling */}
                 <span className="font-black uppercase tracking-widest text-sm">Search</span>
               </button>
             </div>
             
-            {/* POP UP ERROR AREA */}
             {error && (
                 <div className={`mt-4 p-4 rounded-lg flex items-center gap-3 border-2 shadow-md ${error.includes("ALREADY") ? "bg-red-500 text-white border-red-700 animate-pulse" : "bg-red-50 text-red-500 border-red-100"}`}>
                     <AlertTriangle className="w-6 h-6" /> 
@@ -541,6 +707,17 @@ const StaffDashboard = ({ user, setView }) => {
               )}
             </div>
           )}
+
+           {/* --- SECRET LINK TO INSIGHTS --- */}
+           <div className="mt-8 text-center border-t border-gray-100 pt-4">
+             <button 
+               onClick={() => navigate('/insights')} 
+               className="text-[10px] text-gray-400 hover:text-[#1d248a] font-bold uppercase tracking-widest flex items-center gap-1 mx-auto"
+             >
+               <Activity className="w-3 h-3" /> View Data Insights
+             </button>
+           </div>
+
         </div>
       </div>
     </div>
@@ -552,7 +729,6 @@ const LandingPage = ({ startQuiz }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center relative z-10">
       
-      {/* Aesthetic Pop Decorative Elements */}
       <div className="absolute top-1/4 left-6 md:left-20 animate-bounce delay-100">
           <Star className="w-10 h-10 text-[#f4b337] fill-[#f4b337] drop-shadow-md transform -rotate-12" />
       </div>
@@ -561,33 +737,16 @@ const LandingPage = ({ startQuiz }) => {
       </div>
       <div className="absolute top-1/3 right-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[20px] border-t-white border-r-[10px] border-r-transparent rotate-45 opacity-60"></div>
       
-      {/* Circle Outline Decor */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border-[3px] border-white/20 rounded-full animate-ping [animation-duration:3s]"></div>
 
 
       <div className="mb-8 relative group">
-  <div className="absolute inset-0 bg-white rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
+        <div className="absolute inset-0 bg-white rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
 
-  {/* circle */}
-  <div className="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-full 
-                  p-4 shadow-[0px_10px_0px_rgba(0,0,0,0.1)] 
-                  border-[4px] border-white 
-                  flex items-center justify-center 
-                  overflow-hidden
-                  animate-float transform rotate-3 hover:rotate-0 transition-all duration-500">
-
-    <img
-      src="https://static-id.zacdn.com/p/adidas-body-care-6389-0245684-1.jpg"
-      alt="Adidas Vibes"
-      className="max-w-[75%] max-h-[75%] object-contain 
-                 origin-center transform 
-                 transition-transform duration-500 
-                 group-hover:scale-110"
-      style={{ animation: 'float 5s ease-in-out infinite' }}
-    />
-  </div>
+        <div className="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-full p-4 shadow-[0px_10px_0px_rgba(0,0,0,0.1)] border-[4px] border-white flex items-center justify-center overflow-hidden animate-float transform rotate-3 hover:rotate-0 transition-all duration-500">
+            <img src="https://static-id.zacdn.com/p/adidas-body-care-6389-0245684-1.jpg" alt="Adidas Vibes" className="max-w-[75%] max-h-[75%] object-contain origin-center transform transition-transform duration-500 group-hover:scale-110" style={{ animation: 'float 5s ease-in-out infinite' }} />
+        </div>
         
-        {/* Floating Badges - Pop Style */}
         <div className="absolute -top-2 -right-4 bg-[#f58362] text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-full rotate-12 shadow-[2px_2px_0px_#000] animate-bounce border-2 border-white">
             New Drop
         </div>
@@ -600,7 +759,6 @@ const LandingPage = ({ startQuiz }) => {
         Check <br/>
         <span className="text-[#f4b337] inline-block relative">
             Your Vibe
-            {/* Underline Squiggle */}
             <svg className="absolute w-full h-4 -bottom-2 left-0 text-white" viewBox="0 0 100 10" preserveAspectRatio="none">
                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="3" fill="none" />
             </svg>
@@ -608,7 +766,7 @@ const LandingPage = ({ startQuiz }) => {
       </h1>
       
       <p className="text-base md:text-lg font-bold text-white max-w-sm mb-12 leading-relaxed uppercase tracking-tight drop-shadow-md">
-        Discover which scent from the new Adidas Vibes collection matches your energy.
+        Discover which scent from the new Adidas Vibes collection matches your personality.
       </p>
       
       <button 
@@ -622,7 +780,321 @@ const LandingPage = ({ startQuiz }) => {
   );
 };
 
-// --- ROUTER FLOW COMPONENTS (PASTE THIS ABOVE THE MAIN APP) ---
+
+const InsightsDashboard = ({ db, appId }) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [allData, setAllData] = useState([]); // Store RAW data here
+  const [selectedCity, setSelectedCity] = useState("All");
+  
+  // --- 1. FETCH RAW DATA ONCE ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'vibe_codes'));
+        const rawDocs = [];
+        
+        querySnapshot.forEach((doc) => {
+          rawDocs.push({ id: doc.id, ...doc.data() });
+        });
+
+        console.log("rawDocs",rawDocs)
+
+        setAllData(rawDocs);
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [db, appId]);
+
+  // --- 2. FILTER LOGIC (Runs whenever selectedCity changes) ---
+  const { stats, cities } = useMemo(() => {
+    // A. Filter the Raw Data
+    const filteredData = selectedCity === "All" 
+        ? allData 
+        : allData.filter(d => (d.userLocation?.city || "Unknown") === selectedCity);
+
+    // B. Calculate Stats based on Filtered Data
+    let total = 0;
+    let redeemed = 0;
+    let vibeCounts = {};
+    let locationCounts = {}; // For the global list
+    let qCounts = {
+      q1: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+      q2: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+      q3: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+      q4: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+      q5: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+    };
+
+    // Helper: Collect ALL cities for the dropdown (even if filtered)
+    const uniqueCities = new Set();
+
+    // Loop through filtered data for stats
+    filteredData.forEach(data => {
+        total++;
+        if (data.redeemed) redeemed++;
+
+        const v = data.result || "Unknown";
+        vibeCounts[v] = (vibeCounts[v] || 0) + 1;
+
+        if (data.answers) {
+            Object.keys(data.answers).forEach(key => { 
+                const answerVal = data.answers[key]; 
+                if (qCounts[key] && qCounts[key][answerVal] !== undefined) {
+                    qCounts[key][answerVal]++;
+                }
+            });
+        }
+    });
+
+    // Loop through ALL data just to get the city list for the dropdown
+    allData.forEach(data => {
+        const c = data.userLocation?.city || "Unknown";
+        uniqueCities.add(c);
+        locationCounts[c] = (locationCounts[c] || 0) + 1;
+    });
+
+    // Format for Recharts
+    const vibeData = Object.keys(vibeCounts).map(key => ({ name: key, value: vibeCounts[key] }));
+    const locationData = Object.keys(locationCounts)
+        .map(key => ({ name: key, users: locationCounts[key] }))
+        .sort((a, b) => b.users - a.users)
+        .slice(0, 10);
+
+    return { 
+        stats: { total, redeemed, vibes: vibeData, locations: locationData, questions: qCounts },
+        cities: Array.from(uniqueCities).sort()
+    };
+  }, [allData, selectedCity]);
+
+  // --- 3. CSV EXPORT FUNCTION ---
+  const downloadCSV = () => {
+    if (allData.length === 0) return;
+
+    // Defined Headers
+    const headers = ["Code,Result,City,Region,Redeemed,RedeemedAt,Q1,Q2,Q3,Q4,Q5"];
+    
+    // Map Rows
+    const rows = allData.map(row => {
+        const q = row.answers || {};
+        const clean = (str) => `"${(str || "").replace(/"/g, '""')}"`; // Escape quotes
+        
+        return [
+            clean(row.code),
+            clean(row.result),
+            clean(row.userLocation?.city || "Unknown"),
+            clean(row.userLocation?.region || "Unknown"),
+            row.redeemed ? "YES" : "NO",
+            row.redeemedAt ? row.redeemedAt.seconds : "", // Timestamp
+            clean(q.q1), clean(q.q2), clean(q.q3), clean(q.q4), clean(q.q5)
+        ].join(",");
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `adidas_vibes_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- RENDER ---
+  if (loading) {
+    return (
+        <div className="min-h-screen bg-[#1d248a] flex flex-col items-center justify-center">
+            <Loader className="w-12 h-12 text-white animate-spin mb-4" />
+            <p className="text-white font-black uppercase tracking-widest animate-pulse">Loading Data...</p>
+        </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24 font-sans selection:bg-[#a3e635] selection:text-[#1d248a]">
+      
+      {/* --- HEADER --- */}
+      <div className="bg-[#4338ca] pt-12 pb-24 px-6 relative overflow-hidden rounded-b-[4rem] shadow-xl border-b-8 border-[#a3e635]">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#db2777] rounded-full blur-[100px] opacity-30 -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#a3e635] rounded-full blur-[80px] opacity-20 -ml-10 -mb-10"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+            <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+                <button 
+                    onClick={() => navigate('/')} 
+                    className="group bg-white/10 hover:bg-white text-white hover:text-[#4338ca] px-5 py-2 rounded-full font-bold uppercase tracking-widest text-xs flex items-center gap-2 transition-all border border-white/20"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
+                </button>
+                
+                <div className="flex gap-3">
+                    {/* CSV BUTTON */}
+                    <button 
+                        onClick={downloadCSV}
+                        className="bg-[#a3e635] hover:bg-[#8cc63f] text-[#1d248a] px-5 py-2 rounded-full font-bold uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg hover:shadow-xl active:translate-y-1"
+                    >
+                        <Download className="w-4 h-4" /> Export CSV
+                    </button>
+                    <div className="px-4 py-2 bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-full backdrop-blur-md border border-white/30">
+                        {allData.length} Records
+                    </div>
+                </div>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter mb-4 drop-shadow-[4px_4px_0px_#1d248a]">
+                Vibe Check <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a3e635] to-[#db2777]">Insights</span>
+            </h1>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20 space-y-12">
+        
+        {/* --- FILTER CONTROL BAR --- */}
+        <div className="bg-white p-4 rounded-2xl shadow-lg border-2 border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-[#1d248a]">
+                <Filter className="w-5 h-5" />
+                <span className="font-black uppercase tracking-wide text-sm">Filter Dashboard:</span>
+            </div>
+            
+            <select 
+                value={selectedCity} 
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full md:w-64 bg-gray-50 border-2 border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-[#4338ca] focus:border-[#4338ca] block p-2.5 font-bold uppercase tracking-wide outline-none"
+            >
+                <option value="All">All Locations</option>
+                {cities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                ))}
+            </select>
+        </div>
+
+        {/* --- 1. BIG STATS ROW --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard 
+                label={selectedCity === "All" ? "Total Vibes Checked" : `Vibes in ${selectedCity}`}
+                value={stats.total}
+                icon={<Users className="w-8 h-8 text-[#4338ca]" />}
+                color="bg-white"
+                accent="border-[#4338ca]"
+            />
+            <StatCard 
+                label="Vouchers Redeemed"
+                value={stats.redeemed}
+                sub={`${stats.total > 0 ? ((stats.redeemed/stats.total)*100).toFixed(1) : 0}% Rate`}
+                icon={<Ticket className="w-8 h-8 text-white" />}
+                color="bg-[#db2777]"
+                textColor="text-white"
+                accent="border-[#be185d]"
+            />
+            <StatCard 
+                label="Top City (Overall)"
+                value={stats.locations[0]?.name || "N/A"}
+                icon={<MapPin className="w-8 h-8 text-[#4338ca]" />}
+                color="bg-[#a3e635]"
+                accent="border-[#65a30d]"
+            />
+        </div>
+
+        {/* --- 2. MAIN CHARTS --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* VIBE DISTRIBUTION */}
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] border-4 border-[#4338ca] shadow-[8px_8px_0px_#4338ca] relative group hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_#4338ca] transition-all">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="bg-[#4338ca] p-2 rounded-lg text-white"><Activity className="w-5 h-5" /></div>
+                    <h3 className="text-xl font-black text-[#4338ca] uppercase italic tracking-tighter">Personality Breakdown</h3>
+                </div>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats.vibes}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                            <XAxis 
+                                dataKey="name" 
+                                tick={{fontSize: 10, fontWeight: 900, fill: '#4338ca'}} 
+                                interval={0} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                dy={10}
+                            />
+                            <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(67, 56, 202, 0.05)'}} />
+                            <Bar dataKey="value" radius={[8, 8, 8, 8]} barSize={40}>
+                                {stats.vibes.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} strokeWidth={2} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* LOCATION MAP */}
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] border-4 border-[#4338ca] shadow-[8px_8px_0px_#db2777] relative group hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_#db2777] transition-all">
+                 <div className="flex items-center gap-3 mb-8">
+                    <div className="bg-[#db2777] p-2 rounded-lg text-white"><MapPin className="w-5 h-5" /></div>
+                    <h3 className="text-xl font-black text-[#4338ca] uppercase italic tracking-tighter">Top Locations</h3>
+                </div>
+                 <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart layout="vertical" data={stats.locations}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                            <XAxis type="number" hide />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                width={100} 
+                                tick={{fontSize: 11, fontWeight: 800, fill: '#6b7280'}} 
+                                axisLine={false} 
+                                tickLine={false}
+                            />
+                            <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="users" fill="#db2777" radius={[0, 10, 10, 0]} barSize={24}>
+                                {stats.locations.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={index === 0 ? '#4338ca' : '#db2777'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+
+        {/* --- 3. QUESTION DEEP DIVE (POLL STYLE) --- */}
+        <div>
+            <div className="flex items-center gap-4 mb-8">
+                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
+                <h2 className="text-2xl font-black text-[#4338ca] uppercase italic tracking-tighter bg-gray-50 px-4">
+                    The Deep Dive {selectedCity !== "All" && <span className="text-[#db2777]">({selectedCity})</span>}
+                </h2>
+                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Object.keys(stats.questions).map((qKey, idx) => (
+                    <PollCard 
+                        key={qKey} 
+                        qId={qKey} 
+                        index={idx}
+                        data={stats.questions[qKey]} 
+                    />
+                ))}
+            </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="text-center pt-12 pb-8 opacity-50">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em]">Adidas Vibes • Internal Data</p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+
+// --- ROUTER FLOW COMPONENTS ---
 
 const ClientFlow = ({ user }) => {
   const [view, setView] = useState('home'); 
@@ -671,7 +1143,6 @@ const ClientFlow = ({ user }) => {
         <div className="inline-block bg-black/30 backdrop-blur-md rounded-full px-6 py-2 pointer-events-auto border border-white/10 shadow-lg relative">
             <div className="flex justify-center items-center gap-4">
                 <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest">© 2026 Adidas</p>
-     
             </div>
         </div>
       </footer>
@@ -707,9 +1178,9 @@ export default function AdidasVibesApp() {
 
   return (
     <HashRouter>
-      <div className="min-h-screen font-sans text-gray-900 overflow-x-hidden selection:bg-[#f58362] selection:text-white relative bg-[#4834d4]">
+      <div className="min-h-screen font-sans text-gray-900 overflow-x-hidden selection:bg-[#a3e635] selection:text-[#1d248a] relative bg-[#4338ca]">
         
-        <div className="fixed inset-0 bg-gradient-to-br from-[#1d248a] via-[#4834d4] to-[#f58362] animate-gradient-xy"></div>
+        <div className="fixed inset-0 bg-gradient-to-br from-[#db2777] via-[#4338ca] to-[#a3e635] animate-gradient-xy"></div>
         <div className="fixed inset-0 pointer-events-none opacity-[0.1]" style={{ 
             backgroundImage: `linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)`,
             backgroundSize: '40px 40px'
@@ -742,6 +1213,7 @@ export default function AdidasVibesApp() {
         <Routes>
             <Route path="/" element={<ClientFlow user={user} />} />
             <Route path="/staff" element={<StaffFlow user={user} />} />
+            <Route path="/insights" element={<InsightsDashboard db={db} appId={appId} />} />
         </Routes>
 
       </div>
