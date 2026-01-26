@@ -43,57 +43,58 @@ const IMAGES = {
 const QUESTIONS = [
   {
     id: 1,
-    text: "HOW WOULD YOU DESCRIBE YOUR CURRENT MOOD?",
+    text: "WHICH ONE DESCRIBES YOUR PERSONALITY THE MOST?",
     options: [
-      { label: "A. Unstoppable burst of energy", value: "A" },
-      { label: "B. Confident, ready to kick ass", value: "B" },
-      { label: "C. Excitement of escaping & trying new things", value: "C" },
-      { label: "D. Peaceful, relaxed, ignoring pressure", value: "D" },
-      { label: "E. Warm, relaxed, just hanging out", value: "E" }
+      { label: "A. Always full of energy", value: "A" },
+      { label: "B. Confident and ambitious", value: "B" },
+      { label: "C. Adventurous and loves trying something new", value: "C" },
+      { label: "D. Calm and stress-free", value: "D" },
+      { label: "E. Warm and friendly", value: "E" }
     ]
   },
   {
     id: 2,
-    text: "PICK YOUR PERFECT WEEKEND ACTIVITY:",
+    text: "PICK YOUR PERFECT WEEKEND ACTIVITY",
     options: [
-      { label: "A. Night out, dancing, or a HIIT workout", value: "A" },
-      { label: "B. Finishing a project or hitting the gym", value: "B" },
-      { label: "C. Hiking, nature walking, or stargazing", value: "C" },
-      { label: "D. Gaming, crafting, or self-care rituals", value: "D" },
-      { label: "E. Cozy dinner party, movie night, or spa", value: "E" }
+      { label: "A. Night out with friends, working out", value: "A" },
+      { label: "B. Finishing a project, hitting the gym, cleaning", value: "B" },
+      { label: "C. Exploring nature, exercising", value: "C" },
+      { label: "D. Gaming, self-care at home", value: "D" },
+      { label: "E. Movie night, dinner, listening to music", value: "E" }
     ]
   },
   {
     id: 3,
-    text: "CHOOSE YOUR DOMINANT SCENT VIBE:",
+    text: "WHICH SCENT DO YOU PREFER THE MOST?",
+    // This question will have HIGHER WEIGHT (Bobot)
     options: [
-      { label: "A. Spicy & Energetic (Cardamom/Pink Pepper)", value: "A" },
-      { label: "B. Fresh & Sharp (Orange/Black Pepper)", value: "B" },
-      { label: "C. Earthy & Natural (Cedar/Sage)", value: "C" },
-      { label: "D. Calming & Soft (Lavender/Vanilla)", value: "D" },
-      { label: "E. Sweet & Comforting (Vanilla/Mandarin)", value: "E" }
+      { label: "A. Vibrant spice with fresh scent", value: "A" },
+      { label: "B. Fresh citrusy scent", value: "B" },
+      { label: "C. Earthy, green, nature scent", value: "C" },
+      { label: "D. Aromatic lavender & notes of vanilla scent", value: "D" },
+      { label: "E. Comforting vanilla & juicy mandarin scent", value: "E" }
     ]
   },
   {
     id: 4,
-    text: "WHAT'S YOUR MAIN GOAL TODAY?",
+    text: "IN A FRIEND GROUP, YOU ARE...",
     options: [
-      { label: "A. Achieve something & stay active", value: "A" },
-      { label: "B. Clear to-do list & feel confident", value: "B" },
-      { label: "C. Take in nature & escape routine", value: "C" },
-      { label: "D. Find my zone & block out stress", value: "D" },
-      { label: "E. Get comfortable & enjoy the moment", value: "E" }
+      { label: "A. The energetic & group mood-maker", value: "A" },
+      { label: "B. The confident & reliable one", value: "B" },
+      { label: "C. The one that always invites to explore new places", value: "C" },
+      { label: "D. The chill & introverted", value: "D" },
+      { label: "E. The most friendly & group mediator", value: "E" }
     ]
   },
   {
     id: 5,
-    text: "CHOOSE YOUR OUTFIT STYLE:",
+    text: "WHAT’S YOUR GO-TO OUTFIT STYLE?",
     options: [
-      { label: "A. Performance gear ready for action", value: "A" },
-      { label: "B. Trendy, fun, confident street style", value: "B" },
-      { label: "C. Outdoor wear for exploring", value: "C" },
-      { label: "D. Relaxed lounging clothes", value: "D" },
-      { label: "E. Comfy casual wear", value: "E" }
+      { label: "A. Bright colors, fun patterns, playful style", value: "A" },
+      { label: "B. Monochrome, cool style", value: "B" },
+      { label: "C. Casual outfit with lots of unique accessories", value: "C" },
+      { label: "D. Relaxed t-shirt and jeans", value: "D" },
+      { label: "E. Cozy hoodies", value: "E" }
     ]
   }
 ];
@@ -187,12 +188,14 @@ const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => 
     setIsCalculating(true);
     let scores = { ED: 0, SU: 0, FR: 0, CZ: 0, GC: 0 };
 
-    finalAnswers.forEach(ans => {
-      if (ans === "A") scores.ED++;
-      else if (ans === "B") scores.SU++;
-      else if (ans === "C") scores.FR++;
-      else if (ans === "D") scores.CZ++;
-      else if (ans === "E") scores.GC++;
+    finalAnswers.forEach((ans, index) => {
+    const points = (index === 2) ? 2 : 1; 
+
+    if (ans === "A") scores.ED += points;
+    else if (ans === "B") scores.SU += points;
+    else if (ans === "C") scores.FR += points;
+    else if (ans === "D") scores.CZ += points;
+    else if (ans === "E") scores.GC += points;
     });
 
     let maxScore = Math.max(scores.ED, scores.SU, scores.FR, scores.CZ, scores.GC);
@@ -466,20 +469,23 @@ const StaffDashboard = ({ user, setView }) => {
         <div className="p-6">
           <div className="mb-8">
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 pl-1">Input Code</label>
-            <div className="flex gap-2">
+            {/* --- FIXED MOBILE LAYOUT --- */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <input 
                 type="text" 
                 value={inputCode}
                 onChange={(e) => setInputCode(e.target.value.toUpperCase())}
                 placeholder="VIBE-XXXX"
-                className="flex-1 p-4 border-2 border-gray-200 rounded-xl font-mono text-xl uppercase font-bold text-[#1d248a] focus:border-[#1d248a] focus:shadow-[4px_4px_0px_#1d248a] focus:outline-none transition-all placeholder-gray-300"
+                className="w-full h-14 px-4 border-2 border-gray-200 rounded-xl font-mono text-xl uppercase font-bold text-[#1d248a] focus:border-[#1d248a] focus:shadow-[4px_4px_0px_#1d248a] focus:outline-none transition-all placeholder-gray-300"
               />
               <button 
                 onClick={checkCode}
                 disabled={loading}
-                className="bg-[#1d248a] text-white px-6 rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 shadow-[4px_4px_0px_#000] active:translate-y-1 active:shadow-none border-2 border-transparent"
+                className="h-14 bg-[#1d248a] text-white rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 shadow-[4px_4px_0px_#000] active:translate-y-1 active:shadow-none border-2 border-transparent flex justify-center items-center gap-2 sm:w-auto sm:px-6"
               >
                 {loading ? <Activity className="w-6 h-6 animate-spin" /> : <Search className="w-6 h-6" />}
+                {/* Visible Label for Mobile Styling */}
+                <span className="font-black uppercase tracking-widest text-sm">Search</span>
               </button>
             </div>
             
