@@ -1,5 +1,5 @@
 {
-  "homepage": "https://ElodiaNadine.github.io/AdidasParfume",
+  "homepage": "https://ElodiaNadine.github.io/",
   "name": "adidas-vibes-app",
   "private": true,
   "version": "0.0.0",
@@ -16,7 +16,9 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^6.30.3",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "firebase": "^10.7.0",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
