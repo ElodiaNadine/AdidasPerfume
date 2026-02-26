@@ -1,11 +1,17 @@
 /**
  * Download data as CSV file
  */
-export const downloadCSV = (data, appName = 'adidas_vibes') => {
+export const downloadCSV = (data, events = [], appName = 'adidas_vibes') => {
   if (data.length === 0) return;
 
+  // Create event lookup map
+  const eventMap = {};
+  events.forEach(event => {
+    eventMap[event.id] = event.name;
+  });
+
   // Headers
-  const headers = ["Code,Result,City,Region,Redeemed,RedeemedAt,Q1,Q2,Q3,Q4,Q5"];
+  const headers = ["Code,Result,City,Region,Event,AgeRange,Gender,Redeemed,RedeemedAt,Q1,Q2,Q3,Q4,Q5,Q6"];
   
   // Rows
   const rows = data.map(row => {
@@ -17,9 +23,12 @@ export const downloadCSV = (data, appName = 'adidas_vibes') => {
       clean(row.result),
       clean(row.userLocation?.city || "Unknown"),
       clean(row.userLocation?.region || "Unknown"),
+      clean(eventMap[row.eventId] || "No Event"),
+      clean(row.ageRange || "Not provided"),
+      clean(row.gender || "Not provided"),
       row.redeemed ? "YES" : "NO",
       row.redeemedAt ? row.redeemedAt.seconds : "",
-      clean(q.q1), clean(q.q2), clean(q.q3), clean(q.q4), clean(q.q5)
+      clean(q.q1), clean(q.q2), clean(q.q3), clean(q.q4), clean(q.q5), clean(q.q6)
     ].join(",");
   });
 

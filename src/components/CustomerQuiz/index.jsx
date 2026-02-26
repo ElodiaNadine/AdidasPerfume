@@ -2,16 +2,19 @@ import React, { useEffect } from 'react';
 import { Activity, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuiz } from '../../hooks/useQuiz';
 
-export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode }) => {
+export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode, eventId, demographics, setEventData, setQuizData }) => {
   const handleQuizComplete = (result) => {
-    if (result.isExisting) {
-      setCurrentResult(result.result);
-      setGeneratedCode(result.code);
-    } else {
-      setCurrentResult(result.result);
-      setGeneratedCode(result.code);
+    setCurrentResult(result.result);
+    setGeneratedCode(result.code);
+    if (result.eventData) {
+      setEventData(result.eventData);
     }
-    setView('result');
+    if (result.isExisting) {
+      setView('result');
+    } else {
+      setQuizData(result);
+      setView('demographics');
+    }
   };
 
   const {
@@ -24,7 +27,7 @@ export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode
     goToPreviousQuestion,
     goToNextQuestion,
     checkQuizHistory
-  } = useQuiz(user, handleQuizComplete);
+  } = useQuiz(user, handleQuizComplete, eventId, demographics);
 
   useEffect(() => {
     checkQuizHistory();
@@ -67,32 +70,46 @@ export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode
             <Sparkles className="text-white w-5 h-5 animate-pulse" />
           </div>
         </div>
+
+        {/* Question Image */}
+        {currentQuestionData.image && (
+          <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
+            <img 
+              src={currentQuestionData.image} 
+              alt="Question illustration" 
+              className="w-full h-48 object-cover"
+            />
+          </div>
+        )}
         
-        <h2 className="text-2xl md:text-3xl font-black text-[#1d248a] mb-8 leading-none uppercase italic tracking-tight relative z-10 drop-shadow-sm">
+        <h2 className={`text-lg md:text-xl font-black text-[#1d248a] mb-6 leading-tight uppercase italic tracking-tight relative z-10 drop-shadow-sm ${
+          currentQuestionData.isImportant ? 'text-[#db2777]' : ''
+        }`}>
           {currentQuestionData.text}
+          {currentQuestionData.isImportant && <span className="text-[#f58362] ml-2">✨</span>}
         </h2>
 
-        <div className="space-y-4 relative z-10">
+        <div className="space-y-3 relative z-10">
           {currentQuestionData.options.map((option, idx) => {
             const isSelected = currentAnswer === option.value;
             return (
               <button
                 key={idx}
                 onClick={() => handleAnswer(option.value)}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 group flex items-center active:scale-95 active:shadow-none active:translate-y-0 ${
+                className={`w-full text-left p-3 rounded-lg border-2 transition-all duration-200 group flex items-center active:scale-95 active:shadow-none active:translate-y-0 ${
                   isSelected
-                    ? 'bg-[#f4b337] border-[#f58362] shadow-[6px_6px_0px_#f58362]'
-                    : 'bg-white border-transparent shadow-[4px_4px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_#f58362] hover:border-[#f58362] hover:-translate-y-1'
+                    ? 'bg-[#f4b337] border-[#f58362] shadow-[4px_4px_0px_#f58362]'
+                    : 'bg-white border-transparent shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[4px_4px_0px_#f58362] hover:border-[#f58362] hover:-translate-y-0.5'
                 }`}
               >
-                <div className={`flex-shrink-0 w-10 h-10 rounded-full text-white font-black text-sm flex items-center justify-center mr-4 transition-colors duration-200 shadow-inner border-2 border-white ${
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full text-white font-black text-xs flex items-center justify-center mr-3 transition-colors duration-200 shadow-inner border-2 border-white ${
                   isSelected
                     ? 'bg-[#f58362]'
                     : 'bg-[#1d248a] group-hover:bg-[#f58362]'
                 }`}>
                   {visualLetters[idx]}
                 </div>
-                <span className={`font-bold text-sm md:text-base leading-tight uppercase tracking-tight ${
+                <span className={`font-bold text-sm leading-tight uppercase tracking-tight ${
                   isSelected ? 'text-[#1d248a]' : 'text-gray-800'
                 }`}>
                   {option.label}

@@ -2,57 +2,75 @@
 export const QUESTIONS = [
   {
     id: 1,
-    text: "WHICH ONE DESCRIBES YOUR PERSONALITY THE MOST?",
+    text: "Hari Sabtu pagi yang cerah! Teman-teman di group chat sedang membahas ingin jalan kemana hari ini.. Apa yang ingin kamu lakukan?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
     options: [
-      { label: "Always full of energy", value: "A" },
-      { label: "Confident and ambitious", value: "B" },
-      { label: "Adventurous and loves trying something new", value: "C" },
-      { label: "Calm and stress-free", value: "D" },
-      { label: "Warm and friendly", value: "E" }
+      { label: "Olahraga yuk, biar badan gerak!", value: "A" },
+      { label: "Gimana kalau hari ini kita produktif aja? Work from cafe misalnya?", value: "B" },
+      { label: "Kita coba explore tempat baru yuk atau main di outdoor", value: "C" },
+      { label: "Ngumpul aja di rumah salah satu dari kita", value: "D" },
+      { label: "Ayo nonton bioskop!", value: "E" }
     ]
   },
   {
     id: 2,
-    text: "PICK YOUR PERFECT WEEKEND ACTIVITY",
+    text: "Excited, kamu buka lemari baju untuk pilih outfit hari ini! Hmm.. kira kira kamu bakal pakai baju yang mana?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
     options: [
-      { label: "Night out with friends, working out", value: "A" },
-      { label: "Finishing a project, hitting the gym, cleaning", value: "B" },
-      { label: "Exploring nature, exercising", value: "C" },
-      { label: "Gaming, self-care at home", value: "D" },
-      { label: "Movie night, dinner, listening to music", value: "E" }
+      { label: "Baju sporty yang aktif", value: "A" },
+      { label: "Streetwear yang trendy + aksesori kece", value: "B" },
+      { label: "Casual simple, gaya minimalis", value: "C" },
+      { label: "Kaos oversized + jeans", value: "D" },
+      { label: "Hoodie yang cozy", value: "E" }
     ]
   },
   {
     id: 3,
-    text: "WHICH SCENT DO YOU PREFER THE MOST?",
+    text: "Siap berangkat, semprot parfum dulu biar style makin on point. Aroma mana yang paling menggambarkan kamu?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
+    isImportant: true,
     options: [
-      { label: "Vibrant spice with fresh scent", value: "A" },
-      { label: "Fresh citrusy scent", value: "B" },
-      { label: "Earthy, green, nature scent", value: "C" },
-      { label: "Aromatic lavender & notes of vanilla scent", value: "D" },
-      { label: "Comforting vanilla & juicy mandarin scent", value: "E" }
+      { label: "Aroma rempah yang fresh dan vibrant", value: "A" },
+      { label: "Aroma fruity & floral yang segar", value: "B" },
+      { label: "Aroma earthy dengan nuansa hijau natural", value: "C" },
+      { label: "Aroma lembut vanilla lavender yang menenangkan", value: "D" },
+      { label: "Aroma floral vanilla yang hangat", value: "E" }
     ]
   },
   {
     id: 4,
-    text: "IN A FRIEND GROUP, YOU ARE...",
+    text: "Setelah siap, kamu berangkat ke restoran tempat kalian janjian untuk makan siang. Kamu udah sampai di restoran, tapi teman-temanmu telat 30 menit. Hmm.. ngapain ya sambil menunggu?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
     options: [
-      { label: "The energetic & group mood-maker", value: "A" },
-      { label: "The confident & reliable one", value: "B" },
-      { label: "The one that always invites to explore new places", value: "C" },
-      { label: "The chill & introverted", value: "D" },
-      { label: "The most friendly & group mediator", value: "E" }
+      { label: "Cek email & kelarin kerjaan pending", value: "A" },
+      { label: "Scroll social media & rencanain next stop", value: "B" },
+      { label: "Keluar sebentar, jalan, dan foto-foto", value: "C" },
+      { label: "Duduk santai di restoran sambil dengerin musik", value: "D" },
+      { label: "Pesan camilan dulu", value: "E" }
     ]
   },
   {
     id: 5,
-    text: "WHAT'S YOUR GO-TO OUTFIT STYLE?",
+    text: "Akhirnya semuanya sudah berkumpul! Setelah makan, kalian otw ke tempat berikutnya. Tapi ketika sampai, rupanya tempatnya rame banget. Apa yang kamu usulkan?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
     options: [
-      { label: "Bright colors, fun patterns, playful style", value: "A" },
-      { label: "Monochrome, cool style", value: "B" },
-      { label: "Casual outfit with lots of unique accessories", value: "C" },
-      { label: "Relaxed t-shirt and jeans", value: "D" },
-      { label: "Cozy hoodies", value: "E" }
+      { label: "Gimana kalau kita main ke arcade aja?", value: "A" },
+      { label: "Karaoke yuk!", value: "B" },
+      { label: "Jalan-jalan aja ke taman terdekat!", value: "C" },
+      { label: "Jujur... boleh ngga sih kita main di rumah aja?", value: "D" },
+      { label: "Gimana kalau kita cari kafe atau toko buku yang lebih tenang?", value: "E" }
+    ]
+  },
+  {
+    id: 6,
+    text: "Setelah main seharian dengan teman-teman, kamu akhirnya sampai ke rumah. Senang rasanya bisa hangout bersama teman-teman yang lain. Sebelum tidur, apa yang kamu lakukan?",
+    image: "https://blog.tubikstudio.com/wp-content/uploads/2021/04/forest-tale-book-illustrations-tubikarts-2.jpg",
+    options: [
+      { label: "Olahraga sebentar", value: "A" },
+      { label: "Rencanakan planning untuk besok", value: "B" },
+      { label: "Buka jendela sambil melihat langit malam", value: "C" },
+      { label: "Mendengarkan musik sambil scroll social media", value: "D" },
+      { label: "Nonton film sambil nyemil", value: "E" }
     ]
   }
 ];

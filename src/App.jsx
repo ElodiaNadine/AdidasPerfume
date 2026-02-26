@@ -9,12 +9,14 @@ import { ADIDAS_LOGO } from './constants/assets';
 
 // Components
 import { LandingPage } from './components/LandingPage';
+import { DemographicsForm } from './components/DemographicsForm';
 import { CustomerQuiz } from './components/CustomerQuiz';
 import { CustomerResult } from './components/CustomerResult';
 import { StaffDashboard } from './components/StaffDashboard';
 
 // Pages
 import { InsightsDashboard } from './pages/InsightsPage';
+import { EventPage } from './pages/EventPage';
 
 // --- ROUTER FLOW COMPONENTS ---
 
@@ -22,21 +24,61 @@ const ClientFlow = ({ user }) => {
   const [view, setView] = useState('home'); 
   const [currentResult, setCurrentResult] = useState(null);
   const [generatedCode, setGeneratedCode] = useState("");
+  const [eventId, setEventId] = useState(null);
+  const [demographics, setDemographics] = useState(null);
+  const [eventData, setEventData] = useState(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [quizData, setQuizData] = useState(null);
+
+  // Get eventId from URL params on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    const id = params.get('eventId');
+    if (id) {
+      setEventId(id);
+      // Don't auto-start quiz, let them click the button on landing page
+    }
+  }, []);
+
+  // Handle scroll blur effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleStartQuiz = () => {
+    setView('quiz');
+  };
+
+  const handleDemographicsSubmit = async (data) => {
+    setDemographics(data);
+    if (quizData) {
+      await quizData.saveToFirebase(data);
+    }
+    setView('result');
+  };
 
   return (
     <>
-      <nav className="fixed w-full z-50 top-0 transition-all duration-300">
+      <nav className={`fixed w-full z-50 top-0 transition-all duration-300 ${
+        scrollY > 50 
+          ? 'backdrop-blur-xl bg-black/40 shadow-lg' 
+          : 'backdrop-blur-sm bg-transparent'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
+          <div className={`flex justify-between items-center transition-all duration-300 ${scrollY > 50 ? 'h-16' : 'h-20'}`}>
             <div className="flex items-center cursor-pointer gap-3 group" onClick={() => setView('home')}>
-                <div className="bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3">
+                <div className={`bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3 ${scrollY > 50 ? 'scale-90' : 'scale-100'}`}>
                   <img src={ADIDAS_LOGO} alt="Adidas" className="h-6 w-auto brightness-0 invert" />
                 </div>
-                <span className="font-black text-3xl italic tracking-tighter text-white drop-shadow-[2px_2px_0px_#1d248a] group-hover:scale-105 transition-transform">
+                <span className={`font-black italic tracking-tighter text-white drop-shadow-[2px_2px_0px_#1d248a] group-hover:scale-105 transition-all ${scrollY > 50 ? 'text-lg' : 'text-3xl'}`}>
                  <span className="text-[#f4b337]">ADIDAS VIBES</span>
                </span>
             </div>
-            <div className="hidden md:flex space-x-2">
+            <div className={`hidden md:flex space-x-2 transition-opacity ${scrollY > 50 ? 'opacity-0' : 'opacity-100'}`}>
                 <span className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 animate-bounce"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-white/50 border border-white/50 animate-bounce delay-100"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-white/30 border border-white/50 animate-bounce delay-200"></span>
@@ -46,17 +88,22 @@ const ClientFlow = ({ user }) => {
       </nav>
 
       <main className="pt-24 pb-20 relative w-full">
-        {view === 'home' && <LandingPage startQuiz={() => setView('quiz')} />}
+        {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={eventId} />}
+        {view === 'demographics' && <DemographicsForm onSubmit={handleDemographicsSubmit} eventData={eventData} />}
         {view === 'quiz' && (
           <CustomerQuiz 
             user={user} 
             setView={setView} 
             setCurrentResult={setCurrentResult} 
-            setGeneratedCode={setGeneratedCode} 
+            setGeneratedCode={setGeneratedCode}
+            eventId={eventId}
+            demographics={demographics}
+            setEventData={setEventData}
+            setQuizData={setQuizData}
           />
         )}
         {view === 'result' && currentResult && (
-          <CustomerResult result={currentResult} code={generatedCode} />
+          <CustomerResult result={currentResult} code={generatedCode} eventData={eventData} />
         )}
       </main>
 
@@ -72,10 +119,45 @@ const ClientFlow = ({ user }) => {
 };
 
 const StaffFlow = ({ user }) => {
+    const [scrollY, setScrollY] = useState(0);
+
+    useEffect(() => {
+      const handleScroll = () => {
+        setScrollY(window.scrollY);
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
-        <main className="pt-24 pb-20 relative w-full">
-            <StaffDashboard user={user} />
-        </main>
+        <>
+          <nav className={`fixed w-full z-50 top-0 transition-all duration-300 ${
+            scrollY > 50 
+              ? 'backdrop-blur-xl bg-black/40 shadow-lg' 
+              : 'backdrop-blur-sm bg-transparent'
+          }`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className={`flex justify-between items-center transition-all duration-300 ${scrollY > 50 ? 'h-16' : 'h-20'}`}>
+                <div className="flex items-center cursor-pointer gap-3 group" onClick={() => window.location.hash = '#/'}>
+                    <div className={`bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3 ${scrollY > 50 ? 'scale-90' : 'scale-100'}`}>
+                      <img src={ADIDAS_LOGO} alt="Adidas" className="h-6 w-auto brightness-0 invert" />
+                    </div>
+                    <span className={`font-black italic tracking-tighter text-white drop-shadow-[2px_2px_0px_#1d248a] group-hover:scale-105 transition-all ${scrollY > 50 ? 'text-lg' : 'text-3xl'}`}>
+                     <span className="text-[#f4b337]">ADIDAS VIBES</span>
+                   </span>
+                </div>
+                <div className={`hidden md:flex space-x-2 transition-opacity ${scrollY > 50 ? 'opacity-0' : 'opacity-100'}`}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 animate-bounce"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-white/50 border border-white/50 animate-bounce delay-100"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-white/30 border border-white/50 animate-bounce delay-200"></span>
+                </div>
+              </div>
+            </div>
+          </nav>
+          <main className="pt-24 pb-20 relative w-full">
+              <StaffDashboard user={user} />
+          </main>
+        </>
     );
 };
 
@@ -131,6 +213,7 @@ export default function AdidasVibesApp() {
             <Route path="/" element={<ClientFlow user={user} />} />
             <Route path="/staff" element={<StaffFlow user={user} />} />
             <Route path="/insights" element={<InsightsDashboard />} />
+            <Route path="/event/:eventId" element={<EventPage />} />
         </Routes>
 
       </div>

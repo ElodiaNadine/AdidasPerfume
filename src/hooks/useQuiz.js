@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { useState, useCallback, useEffect } from 'react';
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { APP_ID } from '../constants/firebase';
 import { QUESTIONS } from '../constants/quiz';
@@ -11,12 +11,32 @@ import { calculateQuizResult } from '../utils/scoring';
 /**
  * Custom hook for managing quiz state and logic
  */
-export const useQuiz = (user, onQuizComplete = () => {}) => {
+export const useQuiz = (user, onQuizComplete = () => {}, eventId = null, demographics = null) => {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [shuffledQuestions, setShuffledQuestions] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [checkingHistory, setCheckingHistory] = useState(true);
+  const [eventData, setEventData] = useState(null);
+
+  // Fetch event data if eventId exists
+  useEffect(() => {
+    if (eventId) {
+      const fetchEventData = async () => {
+        try {
+          const eventDoc = await getDoc(
+            doc(db, 'artifacts', APP_ID, 'public', 'data', 'events', eventId)
+          );
+          if (eventDoc.exists()) {
+            setEventData(eventDoc.data());
+          }
+        } catch (error) {
+          console.error("Error fetching event data:", error);
+        }
+      };
+      fetchEventData();
+    }
+  }, [eventId]);
 
   // Check if user already completed quiz
   const checkQuizHistory = useCallback(async () => {
@@ -89,14 +109,9 @@ export const useQuiz = (user, onQuizComplete = () => {}) => {
     }
   }, [currentQ, answers]);
 
-  // Calculate and save result
-  const calculateResult = async (finalAnswers) => {
-    setIsCalculating(true);
-    
+  // Save result to Firebase
+  const saveResultToFirebase = async (finalAnswers, uniqueCode, resultData, demographicsData) => {
     try {
-      const resultData = calculateQuizResult(finalAnswers);
-      const uniqueCode = generateVibeCode();
-
       if (user) {
         const locationData = await getIpLocation();
         const answerMap = mapAnswers(finalAnswers);
@@ -110,17 +125,34 @@ export const useQuiz = (user, onQuizComplete = () => {}) => {
             userLocation: locationData,
             redeemed: false,
             createdAt: serverTimestamp(),
-            uid: user.uid
+            uid: user.uid,
+            eventId: eventId || null,
+            ageRange: demographicsData?.ageRange || null,
+            gender: demographicsData?.gender || null
           }
         );
       }
+    } catch (error) {
+      console.error("Error saving result to Firebase:", error);
+    }
+  };
+
+  // Calculate result
+  const calculateResult = async (finalAnswers) => {
+    setIsCalculating(true);
+    
+    try {
+      const resultData = calculateQuizResult(finalAnswers);
+      const uniqueCode = generateVibeCode();
 
       setTimeout(() => {
         setIsCalculating(false);
         onQuizComplete({
           result: resultData,
           code: uniqueCode,
-          isExisting: false
+          isExisting: false,
+          eventData: eventData,
+          saveToFirebase: (demographicsData) => saveResultToFirebase(finalAnswers, uniqueCode, resultData, demographicsData)
         });
       }, 2000);
     } catch (error) {
@@ -138,6 +170,7 @@ export const useQuiz = (user, onQuizComplete = () => {}) => {
     handleAnswer,
     goToPreviousQuestion,
     goToNextQuestion,
-    checkQuizHistory
+    checkQuizHistory,
+    eventData
   };
 };
