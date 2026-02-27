@@ -22,9 +22,6 @@ export const CustomerResult = ({ result, code, eventData }) => {
         <h1 className="text-5xl md:text-5xl font-black text-white italic tracking-tight uppercase drop-shadow-[4px_4px_0px_#1d248a] leading-[0.9] mb-2">
           {result.titleId || result.title}
         </h1>
-        <div className="absolute -top-8 -right-2 text-[#f4b337] animate-bounce">
-          <Star className="w-7 h-7 fill-current stroke-white stroke-2" />
-        </div>
       </div>
 
       <div className="bg-white rounded-[2rem] shadow-[0px_20px_50px_rgba(0,0,0,0.3)] overflow-hidden border-[6px] border-white relative">
@@ -50,7 +47,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
         
         <div className="p-6 text-center relative z-10">
           <p className={`text-2xl font-black uppercase mb-5 ${result.text} tracking-tight leading-tight drop-shadow-sm italic`}>
-            {result.vibeId || result.vibe}
+            {result.vibesId || result.vibes}
           </p>
           
           <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-5 mb-5 text-left border-2 border-dashed border-[#1d248a]/30 relative overflow-hidden">

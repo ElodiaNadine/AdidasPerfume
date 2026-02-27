@@ -4,26 +4,33 @@
 export const downloadCSV = (data, events = [], appName = 'adidas_vibes') => {
   if (data.length === 0) return;
 
-  // Create event lookup map
+  // Create event lookup map with dates
   const eventMap = {};
   events.forEach(event => {
-    eventMap[event.id] = event.name;
+    eventMap[event.id] = {
+      name: event.name,
+      startDate: event.startDate || '',
+      endDate: event.endDate || ''
+    };
   });
 
-  // Headers
-  const headers = ["Code,Result,City,Region,Event,AgeRange,Gender,Redeemed,RedeemedAt,Q1,Q2,Q3,Q4,Q5,Q6"];
+  // Headers - added event start and end dates
+  const headers = ["Code,Result,City,Region,Event,EventStartDate,EventEndDate,AgeRange,Gender,Redeemed,RedeemedAt,Q1,Q2,Q3,Q4,Q5,Q6"];
   
   // Rows
   const rows = data.map(row => {
     const q = row.answers || {};
     const clean = (str) => `"${(str || "").replace(/"/g, '""')}"`; // Escape quotes
+    const eventInfo = eventMap[row.eventId] || {};
     
     return [
       clean(row.code),
       clean(row.result),
       clean(row.userLocation?.city || "Unknown"),
       clean(row.userLocation?.region || "Unknown"),
-      clean(eventMap[row.eventId] || "No Event"),
+      clean(eventInfo.name || "No Event"),
+      clean(eventInfo.startDate),
+      clean(eventInfo.endDate),
       clean(row.ageRange || "Not provided"),
       clean(row.gender || "Not provided"),
       row.redeemed ? "YES" : "NO",

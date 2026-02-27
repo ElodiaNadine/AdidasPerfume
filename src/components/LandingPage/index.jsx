@@ -3,9 +3,13 @@ import { Star, Zap, ArrowRight, Sparkles } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { APP_ID } from '../../constants/firebase';
+import { IMAGES } from '../../constants/assets';
 
 export const LandingPage = ({ startQuiz, eventId }) => {
   const [eventData, setEventData] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [fadeIn, setFadeIn] = useState(true);
+  const productImages = Object.values(IMAGES); // Get all 5 product images
 
   useEffect(() => {
     if (eventId) {
@@ -25,16 +29,22 @@ export const LandingPage = ({ startQuiz, eventId }) => {
     }
   }, [eventId]);
 
+  // Shuffle product images with fade effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeIn(false);
+      setTimeout(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+        setFadeIn(true);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [productImages.length]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center relative z-10">
       
-      <div className="absolute top-1/4 left-6 md:left-20 animate-bounce delay-100">
-        <Star className="w-10 h-10 text-[#f4b337] fill-[#f4b337] drop-shadow-md transform -rotate-12" />
-      </div>
-      <div className="absolute bottom-1/3 right-6 md:right-20 animate-pulse">
-        <Zap className="w-12 h-12 text-[#f58362] fill-[#f58362] drop-shadow-md transform rotate-12" />
-      </div>
-      <div className="absolute top-1/3 right-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[20px] border-t-white border-r-[10px] border-r-transparent rotate-45 opacity-60"></div>
+
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border-[3px] border-white/20 rounded-full animate-ping [animation-duration:3s]"></div>
 
@@ -43,10 +53,15 @@ export const LandingPage = ({ startQuiz, eventId }) => {
 
         <div className="relative w-60 h-60 md:w-48 md:h-48 bg-white rounded-full p-4 shadow-[0px_10px_0px_rgba(0,0,0,0.1)] border-[4px] border-white flex items-center justify-center overflow-hidden animate-float transform rotate-3 hover:rotate-0 transition-all duration-500">
           <img 
-            src="https://static-id.zacdn.com/p/adidas-body-care-6389-0245684-1.jpg" 
+            src={productImages[currentImageIndex]} 
             alt="Adidas Vibes" 
-            className="max-w-[90%] max-h-[90%] object-contain origin-center transform transition-transform duration-500 group-hover:scale-110" 
-            style={{ animation: 'float 5s ease-in-out infinite' }} 
+            className="max-w-[90%] max-h-[90%] object-contain origin-center transform transition-all duration-300 group-hover:scale-110" 
+            style={{ 
+              animation: 'float 5s ease-in-out infinite',
+              opacity: fadeIn ? 1 : 0,
+              transition: 'opacity 300ms ease-in-out'
+            }} 
+            key={currentImageIndex}
           />
         </div>
         
@@ -54,7 +69,7 @@ export const LandingPage = ({ startQuiz, eventId }) => {
           New
         </div>
         <div className="absolute -bottom-2 -left-4 bg-[#f4b337] text-[#1d248a] text-[10px] font-black uppercase px-3 py-1.5 rounded-full -rotate-12 shadow-[2px_2px_0px_#000] border-2 border-white">
-          Vibe
+          Vibes
         </div>
       </div>
 

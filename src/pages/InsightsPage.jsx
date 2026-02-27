@@ -19,6 +19,7 @@ export const InsightsDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState("All");
   const [selectedAgeRange, setSelectedAgeRange] = useState("All");
   const [selectedGender, setSelectedGender] = useState("All");
+  const [selectedDateRange, setSelectedDateRange] = useState({ start: "", end: "" });
   const [events, setEvents] = useState([]);
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventFilter, setEventFilter] = useState("All");
@@ -28,6 +29,8 @@ export const InsightsDashboard = () => {
     location: '',
     description: '',
     type: 'offline',
+    startDate: '',
+    endDate: '',
     marketplaces: []
   });
 
@@ -80,6 +83,8 @@ export const InsightsDashboard = () => {
       location: event.location,
       description: event.description || '',
       type: event.type,
+      startDate: event.startDate || '',
+      endDate: event.endDate || '',
       marketplaces: event.marketplaces || []
     });
     setShowEventForm(true);
@@ -87,7 +92,7 @@ export const InsightsDashboard = () => {
 
   const handleCancelEdit = () => {
     setEditingEventId(null);
-    setFormData({ name: '', location: '', description: '', type: 'offline', marketplaces: [] });
+    setFormData({ name: '', location: '', description: '', type: 'offline', startDate: '', endDate: '', marketplaces: [] });
     setShowEventForm(false);
   };
 
@@ -108,6 +113,8 @@ export const InsightsDashboard = () => {
           location: formData.location,
           description: formData.description,
           type: formData.type,
+          startDate: formData.startDate || null,
+          endDate: formData.endDate || null,
           marketplaces: formData.marketplaces,
           updatedAt: serverTimestamp()
         });
@@ -130,6 +137,8 @@ export const InsightsDashboard = () => {
             location: formData.location,
             description: formData.description,
             type: formData.type,
+            startDate: formData.startDate || null,
+            endDate: formData.endDate || null,
             marketplaces: formData.marketplaces,
             createdAt: serverTimestamp(),
             status: 'active'
@@ -142,6 +151,8 @@ export const InsightsDashboard = () => {
           location: formData.location,
           description: formData.description,
           type: formData.type,
+          startDate: formData.startDate || null,
+          endDate: formData.endDate || null,
           marketplaces: formData.marketplaces,
           createdAt: new Date(),
           status: 'active'
@@ -150,12 +161,30 @@ export const InsightsDashboard = () => {
         alert('Event created successfully!');
       }
       
-      setFormData({ name: '', location: '', description: '', type: 'offline', marketplaces: [] });
+      setFormData({ name: '', location: '', description: '', type: 'offline', startDate: '', endDate: '', marketplaces: [] });
       setShowEventForm(false);
     } catch (error) {
       console.error("Error creating/updating event:", error);
       alert('Failed to create/update event. Check console for details.');
     }
+  };
+
+  // Helper function to check if event is active
+  const isEventActive = (event) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (event.startDate) {
+      const startDate = new Date(event.startDate);
+      if (startDate > today) return 'not-started';
+    }
+    
+    if (event.endDate) {
+      const endDate = new Date(event.endDate);
+      if (endDate < today) return 'expired';
+    }
+    
+    return 'active';
   };
 
   // Filter events by type
@@ -185,6 +214,18 @@ export const InsightsDashboard = () => {
     // Filter by gender
     if (selectedGender !== "All") {
       filteredData = filteredData.filter(d => d.gender === selectedGender);
+    }
+
+    // Filter by date range
+    if (selectedDateRange.start || selectedDateRange.end) {
+      filteredData = filteredData.filter(d => {
+        const dataDate = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
+        const startDate = selectedDateRange.start ? new Date(selectedDateRange.start) : new Date(0);
+        const endDate = selectedDateRange.end ? new Date(selectedDateRange.end) : new Date();
+        endDate.setHours(23, 59, 59, 999);
+        
+        return dataDate >= startDate && dataDate <= endDate;
+      });
     }
 
     let total = 0;
@@ -273,7 +314,7 @@ export const InsightsDashboard = () => {
       ageRanges: Array.from(uniqueAgeRanges).sort(),
       genders: Array.from(uniqueGenders).sort()
     };
-  }, [allData, selectedCity, selectedEvent, selectedAgeRange, selectedGender]);
+  }, [allData, selectedCity, selectedEvent, selectedAgeRange, selectedGender, selectedDateRange]);
 
   if (loading) {
     return (
@@ -373,6 +414,22 @@ export const InsightsDashboard = () => {
                 <option key={gen} value={gen}>{gen}</option>
               ))}
             </select>
+
+            <input 
+              type="date"
+              value={selectedDateRange.start}
+              onChange={(e) => setSelectedDateRange({...selectedDateRange, start: e.target.value})}
+              className="w-full bg-gray-50 border-2 border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-[#4338ca] focus:border-[#4338ca] block p-2.5 font-bold outline-none"
+              placeholder="From"
+            />
+
+            <input 
+              type="date"
+              value={selectedDateRange.end}
+              onChange={(e) => setSelectedDateRange({...selectedDateRange, end: e.target.value})}
+              className="w-full bg-gray-50 border-2 border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-[#4338ca] focus:border-[#4338ca] block p-2.5 font-bold outline-none"
+              placeholder="To"
+            />
           </div>
         </div>
 
@@ -618,6 +675,27 @@ export const InsightsDashboard = () => {
                   </select>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-black text-[#1d248a] uppercase tracking-wide mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-[#4338ca] focus:ring-2 focus:ring-[#4338ca] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-black text-[#1d248a] uppercase tracking-wide mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-[#4338ca] focus:ring-2 focus:ring-[#4338ca] outline-none"
+                    />
+                  </div>
+                </div>
+
                 {/* Marketplace Configuration */}
                 <div className="border-t-2 border-gray-200 pt-6">
                   <label className="block text-sm font-black text-[#1d248a] uppercase tracking-wide mb-4">Marketplace Vouchers (Optional)</label>
@@ -777,22 +855,44 @@ export const InsightsDashboard = () => {
 
           {/* Events List Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map(event => (
+            {filteredEvents.map(event => {
+              const isActive = isEventActive(event);
+              return (
               <div 
                 key={event.id}
-                className="bg-white p-6 rounded-[1.5rem] border-4 border-[#4338ca] shadow-[8px_8px_0px_#4338ca] hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_#4338ca] transition-all cursor-pointer"
+                className="bg-white p-6 rounded-[1.5rem] border-4 border-[#4338ca] shadow-[8px_8px_0px_#4338ca] hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_#4338ca] transition-all cursor-pointer relative"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-black text-[#1d248a] uppercase tracking-tight flex-1">{event.name}</h3>
-                  <span className={`text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ml-2 ${
-                    event.type === 'online' 
-                      ? 'bg-[#db2777] text-white' 
-                      : event.type === 'offline'
-                      ? 'bg-[#a3e635] text-[#1d248a]'
-                      : 'bg-[#4338ca] text-white'
-                  }`}>
-                    {event.type}
-                  </span>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-black text-[#1d248a] uppercase tracking-tight">{event.name}</h3>
+                    {(event.startDate || event.endDate) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {event.startDate && `From ${new Date(event.startDate).toLocaleDateString()}`}
+                        {event.startDate && event.endDate && ' — '}
+                        {event.endDate && `Until ${new Date(event.endDate).toLocaleDateString()}`}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 ml-2">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ${
+                      event.type === 'online' 
+                        ? 'bg-[#db2777] text-white' 
+                        : event.type === 'offline'
+                        ? 'bg-[#a3e635] text-[#1d248a]'
+                        : 'bg-[#4338ca] text-white'
+                    }`}>
+                      {event.type}
+                    </span>
+                    <span className={`text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ${
+                      isActive === 'active'
+                        ? 'bg-green-500 text-white'
+                        : isActive === 'not-started'
+                        ? 'bg-yellow-500 text-white'
+                        : 'bg-gray-400 text-white'
+                    }`}>
+                      {isActive === 'active' ? 'Active' : isActive === 'not-started' ? 'Not Started Yet' : 'Expired'}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="space-y-3 mb-4">
@@ -823,7 +923,8 @@ export const InsightsDashboard = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
 
           {filteredEvents.length === 0 && (

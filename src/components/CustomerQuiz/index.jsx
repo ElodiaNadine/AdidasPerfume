@@ -41,7 +41,7 @@ export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode
           <Activity className="relative w-24 h-24 text-white animate-spin drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]" />
         </div>
         <h2 className="text-4xl md:text-5xl font-black italic text-white tracking-tighter uppercase animate-bounce drop-shadow-[4px_4px_0px_#f58362]">
-          {checkingHistory ? "Checking Status..." : "Analyzing Your Vibe..."}
+          {checkingHistory ? "Checking Status..." : "Analyzing Your Vibes..."}
         </h2>
       </div>
     );
@@ -59,8 +59,6 @@ export const CustomerQuiz = ({ user, setView, setCurrentResult, setGeneratedCode
       </div>
 
       <div className="bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-[10px_10px_0px_rgba(0,0,0,0.2)] border-4 border-white p-6 transform transition-all animate-fade-in relative overflow-hidden">
-        <div className="absolute -top-5 -right-5 w-20 h-20 bg-[#f58362] rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute top-10 -left-5 w-10 h-10 bg-[#1d248a] rotate-45 opacity-10"></div>
 
         <div className="flex justify-between items-center mb-6 relative z-10">
           <span className="bg-[#1d248a] text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest shadow-[3px_3px_0px_#f58362] border border-white/20">

@@ -51,16 +51,42 @@ export const useQuiz = (user, onQuizComplete = () => {}, eventId = null, demogra
       }
 
       const codesRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'vibe_codes');
-      const q = query(codesRef, where("uid", "==", user.uid));
+      // Check for existing quiz completion for THIS event only
+      let q;
+      if (eventId) {
+        // If eventId exists, check only for this specific event
+        q = query(codesRef, where("uid", "==", user.uid), where("eventId", "==", eventId));
+      } else {
+        // If no eventId, check if user has completed any quiz globally (backward compatibility)
+        q = query(codesRef, where("uid", "==", user.uid));
+      }
+      
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         const existingData = querySnapshot.docs[0].data();
         const resultDetails = RESULTS[existingData.result];
+        
+        // Fetch event data if eventId exists and not already loaded
+        let fetchedEventData = eventData;
+        if (existingData.eventId && !eventData) {
+          try {
+            const eventDoc = await getDoc(
+              doc(db, 'artifacts', APP_ID, 'public', 'data', 'events', existingData.eventId)
+            );
+            if (eventDoc.exists()) {
+              fetchedEventData = eventDoc.data();
+            }
+          } catch (error) {
+            console.error("Error fetching event data for existing result:", error);
+          }
+        }
+        
         onQuizComplete({
           result: resultDetails,
           code: existingData.code,
-          isExisting: true
+          isExisting: true,
+          eventData: fetchedEventData  // Include event data (fetched or pre-loaded)
         });
       } else {
         const randomized = QUESTIONS.map(q => ({

@@ -8,6 +8,7 @@ import { auth } from './config/firebase';
 import { ADIDAS_LOGO } from './constants/assets';
 
 // Components
+import { EventSelectionPortal } from './components/EventSelectionPortal';
 import { LandingPage } from './components/LandingPage';
 import { DemographicsForm } from './components/DemographicsForm';
 import { CustomerQuiz } from './components/CustomerQuiz';
@@ -21,7 +22,7 @@ import { EventPage } from './pages/EventPage';
 // --- ROUTER FLOW COMPONENTS ---
 
 const ClientFlow = ({ user }) => {
-  const [view, setView] = useState('home'); 
+  const [view, setView] = useState('event-selection'); 
   const [currentResult, setCurrentResult] = useState(null);
   const [generatedCode, setGeneratedCode] = useState("");
   const [eventId, setEventId] = useState(null);
@@ -36,7 +37,7 @@ const ClientFlow = ({ user }) => {
     const id = params.get('eventId');
     if (id) {
       setEventId(id);
-      // Don't auto-start quiz, let them click the button on landing page
+      setView('home');
     }
   }, []);
 
@@ -48,6 +49,11 @@ const ClientFlow = ({ user }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSelectEvent = (id) => {
+    setEventId(id);
+    setView('home');
+  };
 
   const handleStartQuiz = () => {
     setView('quiz');
@@ -70,7 +76,7 @@ const ClientFlow = ({ user }) => {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex justify-between items-center transition-all duration-300 ${scrollY > 50 ? 'h-16' : 'h-20'}`}>
-            <div className="flex items-center cursor-pointer gap-3 group" onClick={() => setView('home')}>
+            <div className="flex items-center cursor-pointer gap-3 group" onClick={() => setView('event-selection')}>
                 <div className={`bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3 ${scrollY > 50 ? 'scale-90' : 'scale-100'}`}>
                   <img src={ADIDAS_LOGO} alt="Adidas" className="h-6 w-auto brightness-0 invert" />
                 </div>
@@ -88,6 +94,7 @@ const ClientFlow = ({ user }) => {
       </nav>
 
       <main className="pt-24 pb-20 relative w-full">
+        {view === 'event-selection' && <EventSelectionPortal onSelectEvent={handleSelectEvent} />}
         {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={eventId} />}
         {view === 'demographics' && <DemographicsForm onSubmit={handleDemographicsSubmit} eventData={eventData} />}
         {view === 'quiz' && (
