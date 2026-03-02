@@ -18,14 +18,15 @@ import { StaffDashboard } from './components/StaffDashboard';
 // Pages
 import { InsightsDashboard } from './pages/InsightsPage';
 import { EventPage } from './pages/EventPage';
+import { getParameterByName } from './utils/helpers';
 
 // --- ROUTER FLOW COMPONENTS ---
 
 const ClientFlow = ({ user }) => {
-    const [view, setView] = useState('event-selection');
     const [currentResult, setCurrentResult] = useState(null);
     const [generatedCode, setGeneratedCode] = useState("");
-    const [eventId, setEventId] = useState(null);
+    const [eventId, setEventId] = useState(getParameterByName('eventId') || null);
+    const [view, setView] = useState(eventId === 'global' ? 'home' : 'event-selection');
     const [demographics, setDemographics] = useState(null);
     const [eventData, setEventData] = useState(null);
     const [scrollY, setScrollY] = useState(0);
@@ -33,13 +34,11 @@ const ClientFlow = ({ user }) => {
 
     // Get eventId from URL params on mount
     useEffect(() => {
-        const params = new URLSearchParams(window.location.hash.split('?')[1]);
-        const id = params.get('eventId');
-        if (id) {
-            setEventId(id);
+        if (eventId) {
+            eventId !== 'global' && setEventId(eventId);
             setView('home');
         }
-    }, []);
+    }, [eventId]);
 
     // Handle scroll blur effect
     useEffect(() => {
@@ -94,7 +93,7 @@ const ClientFlow = ({ user }) => {
 
             <main className="pt-24 pb-20 relative w-full">
                 {view === 'event-selection' && <EventSelectionPortal onSelectEvent={handleSelectEvent} />}
-                {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={eventId} />}
+                {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={eventId === 'global' ? null : eventId} />}
                 {view === 'demographics' && <DemographicsForm onSubmit={handleDemographicsSubmit} eventData={eventData} />}
                 {view === 'quiz' && (
                     <CustomerQuiz
@@ -102,7 +101,7 @@ const ClientFlow = ({ user }) => {
                         setView={setView}
                         setCurrentResult={setCurrentResult}
                         setGeneratedCode={setGeneratedCode}
-                        eventId={eventId}
+                        eventId={eventId === 'global' ? null : eventId}
                         demographics={demographics}
                         setEventData={setEventData}
                         setQuizData={setQuizData}
@@ -256,7 +255,7 @@ export default function AdidasVibesApp() {
                     }
                 `}</style>
 
-                <Routes>
+                <Routes basename="/AdidasVibes/">
                     <Route path="/" element={<ClientFlow user={user} />} />
                     <Route path="/staff" element={<StaffFlow user={user} />} />
                     <Route path="/insights" element={<InsightsDashboard />} />
