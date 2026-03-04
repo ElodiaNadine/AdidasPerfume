@@ -215,7 +215,7 @@ export default function AdidasVibesApp() {
     }, []);
 
     return (
-        <BrowserRouter>
+        <BrowserRouter basename="/AdidasPerfume/">
             <div className="min-h-screen font-sans text-gray-900 overflow-hidden selection:bg-[#a3e635] selection:text-[#1d248a] relative bg-[#4338ca]">
 
                 <div className="fixed inset-0 four-point-gradient"></div>
@@ -287,7 +287,7 @@ export default function AdidasVibesApp() {
                     }
                 `}</style>
 
-                <Routes basename="/AdidasPerfume/">
+                <Routes>
                     <Route path="/" element={<ClientFlow user={user} />} />
                     <Route path="/staff" element={<StaffFlow user={user} />} />
                     <Route path="/insights" element={<InsightsDashboard />} />
