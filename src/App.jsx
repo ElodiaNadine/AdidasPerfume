@@ -287,7 +287,7 @@ export default function AdidasVibesApp() {
                     }
                 `}</style>
 
-                <Routes basename="/AdidasVibes/">
+                <Routes basename="/AdidasPerfume/">
                     <Route path="/" element={<ClientFlow user={user} />} />
                     <Route path="/staff" element={<StaffFlow user={user} />} />
                     <Route path="/insights" element={<InsightsDashboard />} />
