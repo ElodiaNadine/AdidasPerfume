@@ -19,23 +19,56 @@ import { StaffDashboard } from './components/StaffDashboard';
 import { InsightsDashboard } from './pages/InsightsPage';
 import { EventPage } from './pages/EventPage';
 import { getParameterByName } from './utils/helpers';
+import { APP_CONFIG } from './config/app';
+import { useQuiz } from './hooks/useQuiz';
 
 // --- ROUTER FLOW COMPONENTS ---
 
 const ClientFlow = ({ user }) => {
     const [currentResult, setCurrentResult] = useState(null);
     const [generatedCode, setGeneratedCode] = useState("");
-    const [eventId, setEventId] = useState(getParameterByName('eventId') || null);
-    const [view, setView] = useState(eventId === 'global' ? 'home' : 'event-selection');
+    const [eventId, setEventId] = useState(getParameterByName('eventId') || APP_CONFIG.defaultEventId);
+    const [view, setView] = useState(APP_CONFIG.enableEvents && !eventId ? 'event-selection' : 'home');
     const [demographics, setDemographics] = useState(null);
-    const [eventData, setEventData] = useState(null);
     const [scrollY, setScrollY] = useState(0);
     const [quizData, setQuizData] = useState(null);
 
+    const handleQuizComplete = (result) => {
+        setCurrentResult(result.result);
+        setGeneratedCode(result.code);
+        if (result.eventData) {
+            setEventData(result.eventData);
+        }
+        if (result.isExisting) {
+            setView('result');
+        } else {
+            setQuizData(result);
+            setView('demographics');
+        }
+    };
+
+    const {
+        currentQ,
+        answers,
+        shuffledQuestions,
+        isCalculating,
+        checkingHistory,
+        handleAnswer,
+        goToPreviousQuestion,
+        goToNextQuestion,
+        checkQuizHistory,
+        eventData,
+        setEventData
+    } = useQuiz(user, handleQuizComplete, eventId, demographics);
+
+    useEffect(() => {
+        checkQuizHistory();
+    }, [user, view]);
+
     // Get eventId from URL params on mount
     useEffect(() => {
-        if (eventId) {
-            eventId !== 'global' && setEventId(eventId);
+        if (APP_CONFIG.enableEvents && eventId) {
+            eventId !== APP_CONFIG.defaultEventId && setEventId(eventId);
             setView('home');
         }
     }, [eventId]);
@@ -74,7 +107,7 @@ const ClientFlow = ({ user }) => {
                 }`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className={`flex justify-between items-center transition-all duration-300 ${scrollY > 50 ? 'h-16' : 'h-20'}`}>
-                        <div className="flex items-center cursor-pointer gap-3 group" onClick={() => setView('event-selection')}>
+                        <div className="flex items-center cursor-pointer gap-3 group" onClick={() => setView(APP_CONFIG.enableEvents && !eventId ? 'event-selection' : 'home')}>
                             <div className={`bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3 ${scrollY > 50 ? 'scale-90' : 'scale-100'}`}>
                                 <img src={ADIDAS_LOGO} alt="Adidas" className="h-6 w-auto brightness-0 invert" />
                             </div>
@@ -92,19 +125,19 @@ const ClientFlow = ({ user }) => {
             </nav>
 
             <main className="pt-24 pb-20 relative w-full">
-                {view === 'event-selection' && <EventSelectionPortal onSelectEvent={handleSelectEvent} />}
-                {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={eventId === 'global' ? null : eventId} />}
+                {view === 'event-selection' && APP_CONFIG.enableEvents && <EventSelectionPortal onSelectEvent={handleSelectEvent} />}
+                {view === 'home' && <LandingPage startQuiz={handleStartQuiz} eventId={APP_CONFIG.enableEvents && eventId !== APP_CONFIG.defaultEventId ? eventId : null} />}
                 {view === 'demographics' && <DemographicsForm onSubmit={handleDemographicsSubmit} eventData={eventData} />}
                 {view === 'quiz' && (
                     <CustomerQuiz
-                        user={user}
-                        setView={setView}
-                        setCurrentResult={setCurrentResult}
-                        setGeneratedCode={setGeneratedCode}
-                        eventId={eventId === 'global' ? null : eventId}
-                        demographics={demographics}
-                        setEventData={setEventData}
-                        setQuizData={setQuizData}
+                        currentQ={currentQ}
+                        answers={answers}
+                        shuffledQuestions={shuffledQuestions}
+                        isCalculating={isCalculating}
+                        checkingHistory={checkingHistory}
+                        handleAnswer={handleAnswer}
+                        goToPreviousQuestion={goToPreviousQuestion}
+                        goToNextQuestion={goToNextQuestion}
                     />
                 )}
                 {view === 'result' && currentResult && (
@@ -259,7 +292,7 @@ export default function AdidasVibesApp() {
                     <Route path="/" element={<ClientFlow user={user} />} />
                     <Route path="/staff" element={<StaffFlow user={user} />} />
                     <Route path="/insights" element={<InsightsDashboard />} />
-                    <Route path="/event/:eventId" element={<EventPage />} />
+                    {APP_CONFIG.enableEvents && <Route path="/event/:eventId" element={<EventPage />} />}
                 </Routes>
 
             </div>

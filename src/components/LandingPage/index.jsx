@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { APP_ID } from '../../constants/firebase';
 import { IMAGES } from '../../constants/assets';
+import { APP_CONFIG } from '../../config/app';
 
 export const LandingPage = ({ startQuiz, eventId }) => {
     const [eventData, setEventData] = useState(null);
@@ -12,7 +13,7 @@ export const LandingPage = ({ startQuiz, eventId }) => {
     const productImages = Object.values(IMAGES); // Get all 5 product images
 
     useEffect(() => {
-        if (eventId) {
+        if (APP_CONFIG.enableEvents && eventId && eventId !== APP_CONFIG.defaultEventId) {
             const fetchEvent = async () => {
                 try {
                     const eventDoc = await getDoc(
@@ -29,6 +30,23 @@ export const LandingPage = ({ startQuiz, eventId }) => {
                 }
             };
             fetchEvent().catch((error) => console.error(error));
+        } else {
+            const fetchVouchers = async () => {
+                try {
+                    const mpDoc = await getDoc(
+                        doc(db, 'artifacts', APP_ID, 'public', 'data')
+                    );
+                    if (mpDoc.exists()) {
+                        setEventData({ id: null, marketplaces: mpDoc.data()?.marketplaces || [] });
+                    } else {
+                        console.log("No vouchers found");
+                    }
+                } catch (error) {
+                    console.error("Error fetching vouchers:", error);
+                    setNotFound(true);
+                }
+            };
+            fetchVouchers().catch((error) => console.error(error));
         }
     }, [eventId]);
 
@@ -41,7 +59,7 @@ export const LandingPage = ({ startQuiz, eventId }) => {
     }, [productImages.length]);
 
     // Event Not Found View
-    if (eventId && notFound) {
+    if (APP_CONFIG.enableEvents && eventId && notFound) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center relative z-10">
                 {/* Background decorative elements */}
@@ -51,7 +69,7 @@ export const LandingPage = ({ startQuiz, eventId }) => {
                 {/* Main Icon Container */}
                 <div className="mb-8 relative group">
                     <div className="absolute inset-0 bg-[#f58362] rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
-                    
+
                     <div className="relative w-48 h-48 md:w-56 md:h-56 bg-white rounded-full p-6 shadow-[0px_10px_0px_rgba(0,0,0,0.1)] border-[4px] border-white flex items-center justify-center overflow-hidden animate-float transform rotate-[-3deg] hover:rotate-0 transition-all duration-500">
                         <div className="relative">
                             <MapPinOff className="w-20 h-20 md:w-24 md:h-24 text-[#1d248a] animate-bounce [animation-duration:2s]" strokeWidth={2.5} />
@@ -137,7 +155,7 @@ export const LandingPage = ({ startQuiz, eventId }) => {
                 </div>
             </div>
 
-            {eventId ?
+            {APP_CONFIG.enableEvents && eventId && !notFound ?
                 eventData ? (
                     <div className="mb-8 text-center">
                         <p className="text-xs font-bold text-[#f4b337] uppercase tracking-[0.4em] mb-2 drop-shadow-md">
@@ -156,26 +174,26 @@ export const LandingPage = ({ startQuiz, eventId }) => {
                     </div>
                 : null}
 
-            <div className="mb-8 flex justify-center">
+            {/* <div className="mb-8 flex justify-center">
                 <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#f4b337]/30 to-[#f58362]/30 blur-xl rounded-full"></div>
                     <p className="relative text-xs font-black text-white uppercase tracking-[0.3em] px-6 py-2 border-b-2 border-t-2 border-[#f4b337] drop-shadow-md">
                         cerita minggu ini
                     </p>
                 </div>
-            </div>
+            </div> */}
 
             <h1 className="text-5xl md:text-7xl font-black text-white mb-2 tracking-tighter uppercase italic leading-tight drop-shadow-[4px_4px_0px_#1d248a]">
                 Check <br />
                 <span className="text-[#f4b337]">Your Vibes</span>
             </h1>
 
-            <p className="text-white/90 text-sm md:text-base font-bold max-w-xl mx-auto mb-3 leading-relaxed drop-shadow-md">
+            {/* <p className="text-white/90 text-sm md:text-base font-bold max-w-xl mx-auto mb-3 leading-relaxed drop-shadow-md">
                 ☀️ Teman-teman mengajak kamu jalan hari ini...
-            </p>
+            </p> */}
 
             <p className="text-white/70 text-xs md:text-sm max-w-lg mx-auto mb-10 leading-relaxed">
-                Tapi kemana sih? Olahraga? Eksplorasi? Santai aja di rumah? Mari ikuti petualangan Sabtu spesialmu dan temukan personality vibe sejatimu! 🎯
+                Temukan aroma parfum yang paling cocok untukmu & dapatkan hadiah eksklusif di akhir petualangan!
             </p>
 
             <button

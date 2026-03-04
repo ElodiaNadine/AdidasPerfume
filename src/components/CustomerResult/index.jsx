@@ -10,6 +10,8 @@ const MARKETPLACE_COLORS = {
 };
 
 export const CustomerResult = ({ result, code, eventData }) => {
+    const marketplaceData = eventData?.marketplaces || [];
+    console.log(eventData);
     // Get result code for vibe-specific links
     const resultCode = Object.entries(RESULTS).find(([key, val]) => val.title === result.title)?.[1]?.code;
     return (
@@ -17,7 +19,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
 
             <div className="text-center mb-8 animate-float relative">
                 <span className="inline-block bg-white text-[#1d248a] font-black uppercase tracking-widest text-[9px] px-4 py-1.5 rounded-full shadow-[3px_3px_0px_rgba(0,0,0,0.2)] mb-4 border-2 border-white">
-                    ✨ Hasil Personality Vibes Mu ✨
+                    ✨ Your Special Scent ✨
                 </span>
                 <h1 className="text-5xl md:text-5xl font-black text-white italic tracking-tight uppercase drop-shadow-[4px_4px_0px_#1d248a] leading-[0.9] mb-2">
                     {result.titleId || result.title}
@@ -52,7 +54,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
                         <div className="absolute top-3 right-3 text-gray-200/30">
                             <Heart className="w-6 h-6" />
                         </div>
-                        <p className="text-gray-700 font-bold text-sm mb-4 leading-relaxed">
+                        <p className="text-gray-700 font-bold text-sm mb-4 leading-relaxed whitespace-break-spaces">
                             {result.descId || result.desc}
                         </p>
 
@@ -62,7 +64,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
                                     <Sparkles className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <span className="text-[8px] font-black text-gray-400 uppercase block tracking-wider">Aroma Note</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase block tracking-wider">Aroma Keberuntunganmu</span>
                                     <span className="font-bold text-gray-900 text-sm">{result.scentId || result.scent}</span>
                                 </div>
                             </div>
@@ -128,7 +130,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
                                                                 onError={(e) => e.target.style.display = 'none'}
                                                             />
                                                             <p className="text-[8px] font-bold text-white/90 uppercase tracking-widest">
-                                                                {mpInfo.name} Discount
+                                                                {mpInfo.name} Voucher
                                                             </p>
                                                         </>
                                                     )}
@@ -140,8 +142,8 @@ export const CustomerResult = ({ result, code, eventData }) => {
                                                 </div>
 
                                                 {/* Marketplace Link Button */}
-                                                <div className="text-[8px] font-bold text-white/90 uppercase tracking-widest mt-2 relative z-10 flex items-center gap-1">
-                                                    ✓ Klik untuk Buka Toko →
+                                                <div className="text-[8px] font-bold text-white/90 uppercase tracking-widest mt-2 relative z-10 flex items-center whitespace-break-spaces gap-1">
+                                                    {marketplace.description || `✓ Klik untuk Buka Toko →`}
                                                 </div>
                                             </div>
                                         </a>
@@ -173,7 +175,7 @@ export const CustomerResult = ({ result, code, eventData }) => {
                                                             onError={(e) => e.target.style.display = 'none'}
                                                         />
                                                         <p className="text-[8px] font-bold text-white/90 uppercase tracking-widest">
-                                                            {mpInfo.name} Discount
+                                                            {mpInfo.name} Voucher
                                                         </p>
                                                     </>
                                                 )}
