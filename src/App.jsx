@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { ArrowRight } from 'lucide-react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Firebase & Config
 import { auth } from './config/firebase';
@@ -216,7 +215,7 @@ export default function AdidasVibesApp() {
     }, []);
 
     return (
-        <HashRouter>
+        <BrowserRouter>
             <div className="min-h-screen font-sans text-gray-900 overflow-hidden selection:bg-[#a3e635] selection:text-[#1d248a] relative bg-[#4338ca]">
 
                 <div className="fixed inset-0 four-point-gradient"></div>
@@ -296,6 +295,6 @@ export default function AdidasVibesApp() {
                 </Routes>
 
             </div>
-        </HashRouter>
+        </BrowserRouter>
     );
 }
