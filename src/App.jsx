@@ -174,7 +174,7 @@ const StaffFlow = ({ user }) => {
                 }`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className={`flex justify-between items-center transition-all duration-300 ${scrollY > 50 ? 'h-16' : 'h-20'}`}>
-                        <div className="flex items-center cursor-pointer gap-3 group" onClick={() => window.location.hash = '#/'}>
+                        <div className="flex items-center cursor-pointer gap-3 group" onClick={() => window.location.href = '/AdidasPerfume/'}>
                             <div className={`bg-white/10 backdrop-blur-sm p-1.5 rounded-lg border-2 border-white/20 group-hover:scale-105 transition-transform shadow-lg group-hover:rotate-3 ${scrollY > 50 ? 'scale-90' : 'scale-100'}`}>
                                 <img src={ADIDAS_LOGO} alt="Adidas" className="h-6 w-auto brightness-0 invert" />
                             </div>
@@ -215,7 +215,7 @@ export default function AdidasVibesApp() {
     }, []);
 
     return (
-        <BrowserRouter basename="/AdidasPerfume/">
+        <BrowserRouter basename="/AdidasPerfume">
             <div className="min-h-screen font-sans text-gray-900 overflow-hidden selection:bg-[#a3e635] selection:text-[#1d248a] relative bg-[#4338ca]">
 
                 <div className="fixed inset-0 four-point-gradient"></div>
